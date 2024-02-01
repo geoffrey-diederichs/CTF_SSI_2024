@@ -216,7 +216,7 @@ $ ROPgadget --binary call_me_baby | grep 'rdi'
 0x0000000000401166 : push rbp ; mov rbp, rsp ; pop rdi ; ret
 ```
 
-on trouve `pop rdi; ret` qui est exactement ce que l'on souhaite. allons voir dans gdb :
+on trouve `pop rdi; ret` qui est exactement ce que l'on souhaite. Allons voir dans gdb :
 
 ```gdb
 (gdb) x/5wi 0x000000000040116a
