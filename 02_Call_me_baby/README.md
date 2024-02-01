@@ -339,9 +339,9 @@ fs             0x0                 0
 gs             0x0                 0
 ```
 
-on modifie le payload pour mettre la valeur `baby` dans le rbp, puis injecter le pointeur vers la fonction gadgets. en observant le registre on voit que le rdi est bien modifier.  
+On voit dans le registre que le rdi est bien modifié.  
   
-il faut maintenant ajouter un pointeur vers la fonction call_me pour qu'elle s'execute après gadgets :
+Il faut maintenant ajouter un pointeur vers la fonction call_me pour qu'elle s'execute après gadgets :
 
 ```console
 (gdb) i func call_me
