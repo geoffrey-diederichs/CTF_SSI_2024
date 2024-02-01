@@ -60,7 +60,7 @@ La fonction gets() utilisé pour récupérer l'entrée de l'utilisateur étant v
 
 ## Payload
 
-Utilisons gdb pour trouver notre exploit :
+Utilisons gdb pour trouver notre payload :
 
 ```console
 $ gdb i_love_food -q   
