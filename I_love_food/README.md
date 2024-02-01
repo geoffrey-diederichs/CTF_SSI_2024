@@ -17,6 +17,8 @@ test
 Interesting... Mine is DEADBEEF :) 
 ```
 
+Le programme demande une entrée de l'utilisateur, et s'arrête. Explorons le code.
+
 ## Reverse
 
 Avec ghidra on obtient le code suivant :
