@@ -151,7 +151,7 @@ fs             0x0                 0
 gs             0x0                 0
 ```
 
-On lance gdb, ajoute un break après la fonction gets() pour observer la mémoire et rentre 64 charactères A pour remplir le buffer utiliser pour récupérer l'entrée de l'utilisateur.  
+On lance gdb, ajoute un break après la fonction gets() pour observer la mémoire et rentre 64 charactères A pour remplir le buffer utilisé pour récupérer l'entrée de l'utilisateur.  
   
 L'addresse à laquelle le programme va se rediriger après cette fonction est stocké après le rbp dans la stack. En regardant le registre, et l'adresse à laquelle le rbp est stocké on déduit le payload pour rediriger le programme :
 
