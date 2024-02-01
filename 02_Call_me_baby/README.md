@@ -8,7 +8,7 @@ You just had the best idea, why not write a love letter to your crush ?
 http://internetcest.fun:13337
 ```
 
-[Cet exécutable](./call_me_baby) est fournis. Essayons le :
+[Cet executable](./call_me_baby) est fournis. Essayons le :
 
 ```console
 $ ./call_me_baby 
