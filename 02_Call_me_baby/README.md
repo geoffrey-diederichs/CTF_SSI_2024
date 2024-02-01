@@ -242,7 +242,7 @@ dump of assembler code for function gadgets:
 end of assembler dump.
 ```
 
-ces instructions font partis de la fonction gadgets qu'on a apperçue plus tôt lors du reverse. elle va nous permettre de modifier rdi.  
+Ces instructions font partis de la fonction gadgets qu'on a apperçue plus tôt lors du reverse. elle va nous permettre de modifier rdi.  
   
 on voit la fonction push le rbp sur la stack, puis pop la stack dans rdi. autrement dit il faut mettre la valeur que l'on veut insérer dans rdi, dans le rbp. puis rediriger le programme vers la fonction gadgets. essayons un payload :
 
