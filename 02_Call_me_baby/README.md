@@ -244,7 +244,7 @@ end of assembler dump.
 
 Ces instructions font partis de la fonction gadgets() qu'on a apperçue plus tôt lors du reverse. Elle va nous permettre de modifier rdi.  
   
-On voit la fonction push le rbp sur la stack, puis pop la stack dans rdi. autrement dit il faut mettre la valeur que l'on veut insérer dans rdi, dans le rbp. puis rediriger le programme vers la fonction gadgets. essayons un payload :
+On voit que la fonction push le rbp sur la stack, puis pop la stack dans rdi. Autrement dit la valeur contenu dans le rbp, va se retrouver dans le rdi. Il faut donc modifer le rbp avec la valeur que l'on veut mettre dans le rdi, puis rediriger le programme vers la fonction gadgets. Essayons un payload :
 
 ```console
 (gdb) i func gadgets
