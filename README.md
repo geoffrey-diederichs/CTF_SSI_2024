@@ -1,2 +1,2 @@
-# CTF_SSI_2024
+# CTF SSI 2024
 Write-ups
