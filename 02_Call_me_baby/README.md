@@ -75,7 +75,7 @@ void gadgets(void)
 
 Il faut donc exécuter `execve("/bin/sh",(char **)0x0,(char **)0x0);` dans call_me().  
   
-Pour ce faire on va exploiter la fonction gets() dans vuln() qui est vulnérable à un buffer overflow pour rediriger le programme vers la fonction call_me().
+Pour ce faire, on va exploiter la fonction gets() dans vuln() qui est vulnérable à un buffer overflow pour rediriger le programme vers la fonction call_me().
 
 # Payload
 
@@ -195,11 +195,13 @@ On redirige bien le programme vers la fonction call_me(), mais ne passe pas la c
   if (iVar1 == 0) {
 ```
 
-Pour passer cette condition il faut que la varibale local_10 soit égale à `baby`.  
+Pour passer cette condition il faut que la varibale local_10 prise en argument par la fonction call_me() soit égale à `baby`.  
   
 Deux solutions possibles :
  - Soit modifier le registre pour passer `baby` en argument à la fonction call_me
  - Soit directement rediriger le programme vers l'instruction `execve("/bin/sh",(char **)0x0,(char **)0x0);`
+
+(La deuxième solution est bien plus rapide, allez la voir directement si voulez la solution simple).
 
 ### Solution 1
 
