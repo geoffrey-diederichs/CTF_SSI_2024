@@ -146,4 +146,4 @@ Le payload final est donc `"\x41"*44+"\x0d\xf0\x0d\xf0"`.
 
 ## Exploit
 
-Il faut maintenant se connecter au service et envoyer le payload. On utilise donc [ce script python](./exploit.py) qui permet de ce connecter au serveur, envoyer le payload, puis d'interagir avec le shell pour obetnir le flag.
+Il faut maintenant se connecter au service et envoyer le payload. On utilise donc [ce script python](./exploit.py) qui permet de ce connecter au serveur, envoyer le payload, puis d'interagir avec le shell pour obtenir le flag.
