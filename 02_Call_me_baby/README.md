@@ -21,7 +21,7 @@ You should call her instead...
 
 ## Reverse
 
-Avec ghidra on obtien les fonctions suivantes :
+Avec ghidra on obtient les fonctions suivantes :
 
 ```C
 undefined8 main(void)
