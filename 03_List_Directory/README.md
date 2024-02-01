@@ -302,7 +302,7 @@ fs             0x0                 0
 gs             0x0                 0
 ```
 
-On voit que l'entrée saisie par l'utilisateur n'est pas modifié avant d'être envoyé à vuln(), et que la fonction vuln le copie directement dans la stack. En inspectant le registre pour trouver l'adresse du rbp, on obtient un payload permettant de modifier l'adresse vers laquelle vuln() va retourner :
+On voit que l'entrée saisie par l'utilisateur n'est pas modifié avant d'être envoyé à vuln(), et que la fonction vuln() le copie directement dans la stack. En inspectant le registre pour trouver l'adresse du rbp, on obtient un payload permettant de modifier l'adresse vers laquelle vuln() va retourner :
 
 ```console
 (gdb) i func win
