@@ -186,7 +186,7 @@ Deux solutions possibles :
  - Soit modifier le registre pour passer `baby` en argument à la fonction call_me
  - Soit directement rediriger le programme vers l'instruction `execve("/bin/sh",(char **)0x0,(char **)0x0);`
 
-(La deuxième solution est bien plus rapide, allez la voir directement si voulez la solution simple).
+(La deuxième solution est bien plus rapide, allez directement la voir si voulez la solution simple).
 
 ### Solution 1
 
