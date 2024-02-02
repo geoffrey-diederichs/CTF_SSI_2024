@@ -151,7 +151,7 @@ fs             0x0                 0
 gs             0x0                 0
 ```
   
-L'addresse à laquelle les fonctions se redirigent après leur execution, est stocké après le rbp dans la stack. En regardant le registre, et l'adresse à laquelle le rbp est stocké on déduit le payload pour rediriger le programme :
+L'addresse à laquelle les fonctions se redirigent après leur execution est stocké après le rbp dans la stack. En regardant le registre et l'adresse à laquelle le rbp est stocké, on déduit le payload pour rediriger le programme :
 
 ```console
 (gdb) break *call_me
