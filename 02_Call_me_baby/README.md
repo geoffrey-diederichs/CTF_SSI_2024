@@ -207,7 +207,7 @@ Pour modifier rdi on peut utiliser [un gadget](./https://ir0nstone.gitbook.io/no
 
 Utilison l'outil ROPgadgets pour en trouver :
 
-```console
+```bash
 $ ROPgadget --binary call_me_baby | grep 'rdi'
 0x0000000000401165 : mov dl, byte ptr [rbp + 0x48] ; mov ebp, esp ; pop rdi ; ret
 0x0000000000401168 : mov ebp, esp ; pop rdi ; ret
