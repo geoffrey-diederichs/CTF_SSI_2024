@@ -352,7 +352,7 @@ Program received signal SIGSEGV, Segmentation fault.
 148	../sysdeps/posix/system.c: No such file or directory.
 ```
 
-We reached the success message, but ran into a SIGSEGV. Let's take a closer look :
+We've reached the success message, but ran into a SIGSEGV. Let's take a closer look :
 
 ```gdb
 (gdb) 
