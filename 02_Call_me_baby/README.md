@@ -21,7 +21,7 @@ Again, the program is asking for an input and then exiting. Let's explore the co
 
 ## Static analysis
 
-Using Ghidra, we find those functions :
+Using Ghidra, we can find those functions :
 
 ```C
 undefined8 main(void)
