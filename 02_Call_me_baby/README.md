@@ -63,7 +63,7 @@ void gadgets(void)
 }
 ```
 
-We need to execture `execve("/bin/sh",(char **)0x0,(char **)0x0);` in call_me().  
+We need to execute `execve("/bin/sh",(char **)0x0,(char **)0x0);` in call_me().  
   
 The read() function is expecting 100 bytes (`read(0,local_48,100);`), even tho the local_48 variable used to store the user input is only 64 bytes long (`undefined local_48 [64];`). This is vulnerable to a [buffer overflow](https://en.wikipedia.org/wiki/Buffer_overflow), so we'll exploit it to redirect the program towards the call_me() function.
 
