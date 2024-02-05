@@ -52,7 +52,7 @@ void vuln(void)
 
 We want to execute the command `system("/bin/sh");` in the vuln() function to get a shell. To do so we'll need to pass this condition : `if (local_c == 0xf00df00d)`.  
   
-To achieve this, we'll modify the variable local_c by exploiting the gets() function which is vulnerable to a [buffer overflow](https://en.wikipedia.org/wiki/Buffer_overflow).
+To achieve this, we'll modify the local_c variable by exploiting the gets() function which is vulnerable to a [buffer overflow](https://en.wikipedia.org/wiki/Buffer_overflow).
 
 ## Dynamic analysis
 
