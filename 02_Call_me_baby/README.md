@@ -166,7 +166,7 @@ Program received signal SIGSEGV, Segmentation fault.
 0x00007fffffffdb0a in ?? ()
 ```
 
-Looking back at our static analysis and the call_me() function we understand that we've reached the function, but didn't pass this condition :
+Looking back at our static analysis and the call_me() function, we understand that we've reached the function, but didn't pass this condition :
 
 ```C
   iVar1 = strcmp((char *)&local_10,"baby");
