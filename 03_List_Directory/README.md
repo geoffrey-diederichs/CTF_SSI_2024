@@ -364,7 +364,7 @@ Program received signal SIGSEGV, Segmentation fault.
 => 0x7ffff7e15603 <do_system+339>:	movaps %xmm0,0x50(%rsp)
 ```
 
-Using the `x/wi` which prints out the instruction at the given address, we find out that the program crashed while trying to execute a movaps instruction. Thanks to [this blog](https://ropemporium.com/guide.html#Common-pitfalls), we can understand that the stack might be misaligned because of our injections. Apparently we need execute a `ret` instruction to realign it. Let's find an address to a `ret` instruction :
+Using the `x/wi` which prints out the instruction at the given address, we find out that the program crashed while trying to execute a movaps instruction. Thanks to [this blog](https://ropemporium.com/guide.html#Common-pitfalls), we can understand that the stack might be misaligned because of our injections. Apparently we need to execute a `ret` instruction to realign it. Let's find an address to a `ret` instruction :
 
 ```gdb
 (gdb) disas vuln
