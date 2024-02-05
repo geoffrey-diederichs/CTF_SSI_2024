@@ -116,7 +116,7 @@ Breakpoint 1, 0x00005555555551c3 in vuln ()
 ```
 
 The rsp (Resgister Stack Pointer) is a register that points to the top of the current stack. So by using the `x/20wx $rsp` instruction, we can inspect the current stack.  
-In the stack, we can easily spot the 44 "\x41" we gave to the program, and we can see a 0xdeadbe00 value right next to it. During our static analysis, we found `local_c = 0xdeadbeef;`, which means that the local_c variable is stored right after the user input. Let's write over it by adding "\x0d\xf0\x0d\xf0" (being on a [little endian system](https://en.wikipedia.org/wiki/Endianness) we write over memory in reverse), we need to write over memory  after our previous input :
+In the stack, we can easily spot the 44 "\x41" we gave to the program, and we can see a 0xdeadbe00 value right next to it. During our static analysis, we found `local_c = 0xdeadbeef;`, which means that the local_c variable is stored right after the user input. Let's write over it by adding "\x0d\xf0\x0d\xf0" after our previous input (being on a [little endian system](https://en.wikipedia.org/wiki/Endianness) we write over memory in reverse) :
 
 ```gdb
 (gdb) r <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*44+b"\x0d\xf0\x0d\xf0")')
