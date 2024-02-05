@@ -17,7 +17,7 @@ test
 Not implemented yet!
 ```
 
-# Reverse
+# Static analysis
 
 Using Ghidra, we can find those functions :
 
@@ -103,7 +103,7 @@ Let's try and exploit a buffer overflow to redirect the program towards the win(
   
 This function being extremely obfuscated, let's try to analyse the binary dynamically instead of understanding all of the code.
 
-# Payload
+# Dynamic analysis
 
 We're going to use gdb to observe what's going on with our input during the execution of this program.  
   
