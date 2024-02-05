@@ -214,7 +214,7 @@ End of assembler dump.
 Breakpoint 4 at 0x401204
 ```
 
-Now, we're going to input 4 "\x41", and print out the stack at every break to try and find our input :
+Now, we're going to input 4 "\x41", and print out the stack at every break to try and find our input (0x41414141) inside the stack :
 
 ```gdb
 (gdb) run <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*4)')
