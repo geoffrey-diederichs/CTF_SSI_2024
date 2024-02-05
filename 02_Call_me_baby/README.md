@@ -317,7 +317,7 @@ gs             0x0                 0
 
 Using the `info register` command to check the register, we can see that the rdi has been modified.
   
-Now let's add a pointer to the call_me() function at the end of our payload, so that it's called after we modified the rdi :
+Now let's add a pointer to the call_me() function at the end of our payload, so that it's called after we've modified the rdi :
 
 ```gdb
 (gdb) info function call_me
