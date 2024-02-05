@@ -65,7 +65,7 @@ void gadgets(void)
 
 We need to execture `execve("/bin/sh",(char **)0x0,(char **)0x0);` in call_me().  
   
-The read() is expecting 100 bytes (`read(0,local_48,100);`), even tho the local_48 variable used to store the user input is only 64 bytes long (`undefined local_48 [64];`). This is vulnerable to a [buffer overflow](https://en.wikipedia.org/wiki/Buffer_overflow), so we'll exploit it to redirect the program towards the call_me() function.
+The read() function is expecting 100 bytes (`read(0,local_48,100);`), even tho the local_48 variable used to store the user input is only 64 bytes long (`undefined local_48 [64];`). This is vulnerable to a [buffer overflow](https://en.wikipedia.org/wiki/Buffer_overflow), so we'll exploit it to redirect the program towards the call_me() function.
 
 # Dynamic analysis
 
@@ -95,7 +95,7 @@ End of assembler dump.
 Breakpoint 2 at 0x40120a
 ```
 
-Now we'll input 64 characters to fill up local_48, and inspect the register to see how many bytes we need to write over before reaching the rbp :
+Now we'll input 64 characters using python to fill up local_48, and inspect the register to see how many bytes we need to write over before reaching the rbp :
 
 ```gdb
 (gdb) r <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*64)')
@@ -140,9 +140,8 @@ gs             0x0                 0
 ```
 
 The `x/24wx $rsp` command is printing out the stack, we can easily spot the "\x41" characters we gave to the program. Next we use the `info register` command to print out the register and find out where the rbp is : `rbp            0x7fffffffda00`. Looking at the stack, we can see that the rbp is right next to our input. We'll only need to write over the rbp (8 bytes) to reach the return address.  
-
-
-Now let's find out the address of the call_me() function we want to reach :
+  
+Now let's find the address of the call_me() function we want to reach :
 
 ```gdb
 (gdb) info func call_me
@@ -167,7 +166,7 @@ Program received signal SIGSEGV, Segmentation fault.
 0x00007fffffffdb0a in ?? ()
 ```
 
-Looking back at our static analysis and the call_me() function we understand that we're reaching the function, but not passing this condition :
+Looking back at our static analysis and the call_me() function we understand that we've reached the function, but didn't pass this condition :
 
 ```C
   iVar1 = strcmp((char *)&local_10,"baby");
@@ -177,8 +176,8 @@ Looking back at our static analysis and the call_me() function we understand tha
 To pass this condition, we need to modify local_10, which is a variable taken as argument to the call_me() function. 
   
 To do so, we should either :
- - modify the register to modify the argument given to call_me() when wa call it
- - directly redirect the program towards the instruction `execve("/bin/sh",(char **)0x0,(char **)0x0);`
+ - Modify the register to modify the argument given to call_me() when we call it.
+ - Directly redirect the program towards the instruction `execve("/bin/sh",(char **)0x0,(char **)0x0);`.
 
 (The second solution being easier, directly go there if you want the simplest approch).
 
@@ -197,7 +196,7 @@ $ ROPgadget --binary call_me_baby | grep 'rdi'
 0x0000000000401166 : push rbp ; mov rbp, rsp ; pop rdi ; ret
 ```
 
-We found `pop rdi; ret` which is exaclty what we want : the `pop rdi` instruction is save the last value on the stack into rdi, and the `ret` instruction will redirect the program towards the next value in the stack.  
+We found `pop rdi; ret` which is exaclty what we want : the `pop rdi` instruction will save the last value on the stack into rdi, and the `ret` instruction will redirect the program towards the next value on the stack.  
   
 Let's look at the instructions 
 ```gdb
