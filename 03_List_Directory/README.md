@@ -300,7 +300,7 @@ fs             0x0                 0
 gs             0x0                 0
 ```
 
-We can see that our input is constantly present in the stack and not being modified before it's passed on to the vuln() function.  
+We can see that our input is constantly present on the stack and not being modified before it's passed on to the vuln() function.  
   
 Looking at the register and where the rbp is stored in vuln(), we can determine that we need to write over 32 bytes to reach the return pointer. Let's try a payload : 32 bytes to reach the return address, and a pointer to the win() function.
 
