@@ -69,7 +69,7 @@ The read() function is expecting 100 bytes (`read(0,local_48,100);`), even tho t
 
 # Dynamic analysis
 
-In the stack, after the rbp (Register Base Pointer, which points to the base of the current stack) is stored a pointer to where the program will have to go next. For example, after running the vuln() function, the program will return to the main() function. So the next value after the rbp will be a pointer towards the main function. By overwriting this pointer, we can redirect the program execution.  
+On the stack, after the rbp (Register Base Pointer, which points to the base of the current stack) is stored a pointer to where the program will have to go next. For example, after running the vuln() function, the program will return to the main() function. So the next value after the rbp will be a pointer towards the main function. By overwriting this pointer, we can redirect the program execution.  
   
 Let's find out how many bytes we need to write over. First, we'll disassemble the vuln() function and add a breakpoint after the read() function is called :
 
