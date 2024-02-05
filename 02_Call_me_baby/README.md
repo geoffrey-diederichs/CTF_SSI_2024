@@ -206,7 +206,7 @@ Let's look at the gadget we found on gdb :
    0x40116b <gadgets+5>:	ret
 ```
 
-Apparently those instrutions are part of the function gadgets() we saw earlier during our static analysis. Let's look further into this function :
+Apparently those instructions are part of the function gadgets() we saw earlier during our static analysis. Let's look further into this function :
 
 ```gdb
 (gdb) info function gadgets
