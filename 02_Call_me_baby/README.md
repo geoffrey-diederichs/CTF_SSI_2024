@@ -228,7 +228,7 @@ end of assembler dump.
 
 This function is pushing the rbp onto the stack, then poping the stack into the rdi. In other words, the value contained in the rbp will end up in the rdi.  
   
-So we need to overwrite the rbp with the value we want in the rdi, and then call the function gadgets(). Let's try a payload : 64 bytes to overwrite loacl_48, `baby` in hexadecimals (to be written over the rbp), and the pointer to the gadgets() function. Let's put a breakpoint at the function gadgets and see what's going on :
+So we need to overwrite the rbp with the value we want in the rdi, and then call the function gadgets(). Let's try a payload : 64 bytes to overwrite local_48, `baby` in hexadecimals (to be written over the rbp), and the pointer to the gadgets() function. Let's put a breakpoint at the function gadgets and see what's going on :
 
 ```gdb
 (gdb) break *gadgets
