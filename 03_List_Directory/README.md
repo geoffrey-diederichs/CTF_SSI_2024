@@ -8,7 +8,7 @@ I am making a program to replace ls, but I have not even started and a friend to
 http://internetcest.fun:13339
 ```
 
-[This binary](./list_directory) is given. Let's try it out :
+We've been given [this binary](./list_directory). Let's try it out :
 
 ```bash
 $ ./list_directory 
