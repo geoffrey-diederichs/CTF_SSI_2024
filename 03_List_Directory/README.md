@@ -101,7 +101,7 @@ memcpy(&local_20,param_1,(long)PATH_LEN);
 
 Let's try and exploit a buffer overflow to redirect the program towards the win() function after vuln().  
   
-This function being extremely obfuscated, let's try to analyse the binary dynamically instead of understanding all of the code.
+This function being extremely obfuscated, let's try to analyze the binary dynamically instead of understanding all of the code.
 
 # Dynamic analysis
 
