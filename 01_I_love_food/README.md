@@ -8,7 +8,7 @@ I made a program to know more about the tastes of the players, what's your favor
 http://internetcest.fun:13338
 ```
 
-[This binary](./i_love_food) is given. Let's try it out :
+We've been given [this binary](./i_love_food). Let's try it out :
 
 ```console
 $ ./i_love_food 
