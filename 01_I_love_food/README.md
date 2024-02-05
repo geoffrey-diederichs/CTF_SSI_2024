@@ -1,6 +1,6 @@
 # I love food !
 
-Subjet :
+Subject :
 
 ```md
 I made a program to know more about the tastes of the players, what's your favorite food ? :)
