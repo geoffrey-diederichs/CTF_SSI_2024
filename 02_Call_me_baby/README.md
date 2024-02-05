@@ -19,7 +19,7 @@ You should call her instead...
 
 Again, the program is asking for an input and then exiting. Let's explore the code.
 
-## Static analysis
+# Static analysis
 
 Using Ghidra, we can find those functions :
 
@@ -196,7 +196,7 @@ $ ROPgadget --binary call_me_baby | grep 'rdi'
 0x0000000000401166 : push rbp ; mov rbp, rsp ; pop rdi ; ret
 ```
 
-We found `pop rdi; ret` which is exaclty what we want : the `pop rdi` instruction will save the last value on the stack into rdi, and the `ret` instruction will redirect the program towards the next value on the stack.  
+We found `pop rdi; ret` which is exactly what we want : the `pop rdi` instruction will save the last value on the stack into rdi, and the `ret` instruction will redirect the program towards the next value on the stack.  
   
 Let's look at the gadget we found on gdb :
   
