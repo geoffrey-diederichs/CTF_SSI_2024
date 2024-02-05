@@ -58,7 +58,7 @@ To achieve this, we'll modify the local_c variable by exploiting the gets() func
 
 Let's find out how many bytes we need to write over before modifying local_c using gdb.  
   
-First, we'll add a breakpoint (gdb will stop everytime the program reaches this instruction) after the gets() function is called. To do so, we'll disasemble the vuln() function and look for the instruction calling gets() :
+First, we'll add a breakpoint (gdb will stop everytime the program reaches this instruction) after the gets() function is called. To do so, we'll disassemble the vuln() function and look for the instruction calling gets() :
 
 ```gdb
 (gdb) disas vuln
