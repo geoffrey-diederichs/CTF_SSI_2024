@@ -8,7 +8,7 @@ You just had the best idea, why not write a love letter to your crush ?
 http://internetcest.fun:13337
 ```
 
-[This binary](./call_me_baby) is given. Let's try it out :
+We've been given [this binary](./call_me_baby). Let's try it out :
 
 ```console
 $ ./call_me_baby 
