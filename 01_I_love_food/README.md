@@ -56,7 +56,7 @@ To achieve this, we'll modify the local_c variable by exploiting the gets() func
 
 ## Dynamic analysis
 
-Let's find out how many bytes we need to write over before modifying local_c using gdb.  
+Let's find out how many bytes we need to send to modify local_c using gdb.  
   
 First, we'll add a breakpoint (gdb will stop everytime the program reaches this instruction) after the gets() function is called. To do so, we'll disassemble the vuln() function and look for the instruction calling gets() :
 
@@ -97,7 +97,7 @@ End of assembler dump.
 Breakpoint 1 at 0x11c3
 ```
 
-According to our static analysis, the variable used to store the user input is of 44 bytes : `char local_38 [44];`. Let's fill this variable by using python to print 44 characters (we'll use "\x41" which is an `A` in ascii), and then inspect the stack to see how many bytes we need to write over before writing over local_c :
+According to our static analysis, the variable used to store the user input is of 44 bytes : `char local_38 [44];`. Let's fill this variable by using python to send 44 characters (we'll use "\x41" which is an `A` in ascii), and then inspect the stack to see how many bytes we need to send before writing over local_c :
 
 ```gdb
 (gdb) r <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*44)')
@@ -153,7 +153,7 @@ Program received signal SIGSEGV, Segmentation fault.
 
 The program does reach the success message and open another process.  
   
-Let's test our payload on the binary using the intruction `(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*44+b"\x0d\xf0\x0d\xf0")' ; tee)` to input our payload, and then freeze the shell before it closes :
+Let's test our payload on the binary using the intruction `(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*44+b"\x0d\xf0\x0d\xf0")' ; tee)` to send our payload, and then freeze the shell before it closes :
 
 ```console
 $ (python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*44+b"\x0d\xf0\x0d\xf0")' ; tee) | ./i_love_food  
