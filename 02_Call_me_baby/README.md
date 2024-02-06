@@ -69,9 +69,9 @@ The read() function is expecting 100 bytes (`read(0,local_48,100);`), even tho t
 
 # Dynamic analysis
 
-On the stack, after the rbp (Register Base Pointer, which points to the base of the current stack) is stored a pointer to where the program will have to go next. For example, after running the vuln() function, the program will return to the main() function. So the next value after the rbp will be a pointer towards the main function. By overwriting this pointer, we can redirect the program execution.  
+On the stack, after the rbp (Register Base Pointer, which points to the base of the current stack) is stored a pointer to where the program will have to go next. For example, after running the vuln() function, the program will return to the main() function. So the next value after the rbp will be a pointer towards the main function. By writing over this pointer, we can redirect the program execution.  
   
-Let's find out how many bytes we need to write over. First, we'll disassemble the vuln() function and add a breakpoint after the read() function is called :
+Let's find out how many bytes we need to send. First, we'll disassemble the vuln() function and add a breakpoint after the read() function is called :
 
 ```gdb
 (gdb) disas vuln
@@ -95,7 +95,7 @@ End of assembler dump.
 Breakpoint 2 at 0x40120a
 ```
 
-Now we'll input 64 characters using python to fill up local_48, and inspect the register to see how many bytes we need to write over before reaching the rbp :
+Now we'll send 64 characters using python to fill up local_48, and inspect the register to see how many bytes we need to send before reaching the rbp :
 
 ```gdb
 (gdb) run <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*64)')
@@ -151,7 +151,7 @@ Non-debugging symbols:
 0x000000000040118a  call_me
 ```
 
-The address is : `0x000000000040118a`. Let's rewrite our payload, we'll need to input 64 characters to write over local_48, 8 characters to write over the rbp, and then the pointer to the call_me() function (in reverse since we're on a [little endian system](https://en.wikipedia.org/wiki/Endianness)) :
+The address is : `0x000000000040118a`. Let's rewrite our payload, we'll need to send 64 characters to write over local_48, 8 characters to write over the rbp, and then the pointer to the call_me() function (in reverse since we're on a [little endian system](https://en.wikipedia.org/wiki/Endianness)) :
 
 ```gdb
 (gdb) run <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*64+b"\x41"*8+b"\x8a\x11\x40\x00"+b"\x00"*4)')
@@ -228,7 +228,7 @@ end of assembler dump.
 
 This function is pushing the rbp onto the stack, then poping the stack into the rdi. In other words, the value contained in the rbp will end up in the rdi.  
   
-So we need to overwrite the rbp with the value we want in the rdi, and then call the function gadgets(). Let's try a payload : 64 bytes to overwrite local_48, 'baby' in hexadecimals (to be written over the rbp), and the pointer to the gadgets() function. Let's put a breakpoint at the function gadgets() and see what's going on :
+So we need to write over the rbp with the value we want in the rdi, and then call the function gadgets(). Let's try a payload : 64 bytes to write over local_48, 'baby' in hexadecimals (to be written over the rbp), and the pointer to the gadgets() function. Let's put a breakpoint at the function gadgets() and see what's going on :
 
 ```gdb
 (gdb) break *gadgets
@@ -404,7 +404,7 @@ Dump of assembler code for function call_me:
 End of assembler dump.
 ```
 
-We can see that the instruction is being called at the address `0x00000000004011c4`. Let's try a payload : 72 characters to overwrite local_48 and the rbp, followed by the pointer to the execve() function. 
+We can see that the instruction is being called at the address `0x00000000004011c4`. Let's try a payload : 72 characters to write over local_48 and the rbp, followed by the pointer to the execve() function. 
 
 ```gdb
 (gdb) run <<< $(python3 -c 'import sys; sys.stdout.buffer.write(b"\x41"*72+b"\xb0\x11\x40\x00"+b"\x00"*4)')
