@@ -23,7 +23,6 @@ Using Ghidra, we can find those functions :
 
 ```C
 undefined8 main(undefined4 param_1,undefined8 param_2)
-
 {
   char *pcVar1;
   ulong uVar2;
